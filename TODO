@@ -1,0 +1,22 @@
+expences.py
+1. Natural language processing: "spent 50k on groceries" → automatically categorized
+Patterns to detect:
+- "spent 50 on uber" → Transportation, 50
+- "15k coffee" → Dining, 15000
+- "bought groceries 120" → Groceries, 120
+- "salary 5M" → Income, 5000000
+- "netflix subscription 35k monthly" → Subscription
+
+Features to implement:
+1. Spending velocity tracking
+2. Category-wise trend analysis
+3. Anomaly detection: "Unusual dining expense!"
+4. Budget burn rate calculation
+5. Savings potential estimation
+
+Trigger conditions:
+- Haven't logged in 2 days → "Missing any expenses?"
+- Approaching budget limit (80%) → Warning
+- Subscription due in 2 days → Reminder
+- Friday evening → "Log your weekend plans?"
+- Payday → "Don't forget to log income!"

@@ -3,4 +3,15 @@ name = "finance-tracker"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "aiogram>=3.22.0",
+    "asyncpg>=0.30.0",
+    "openai>=2.0.1",
+    "psycopg2-binary>=2.9.10",
+    "pydantic-settings>=2.11.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytz>=2025.2",
+    "sqlalchemy>=2.0.43",
+    "thefuzz>=0.22.1",
+]
