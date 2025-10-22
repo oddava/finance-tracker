@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "aiogram>=3.22.0",
     "asyncpg>=0.30.0",
+    "fastapi>=0.119.1",
+    "ngrok>=1.5.1",
     "openai>=2.0.1",
     "psycopg2-binary>=2.9.10",
     "pydantic-settings>=2.11.0",
@@ -14,4 +16,5 @@ dependencies = [
     "pytz>=2025.2",
     "sqlalchemy>=2.0.43",
     "thefuzz>=0.22.1",
+    "uvicorn>=0.38.0",
 ]

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database import User
 from bot.keyboards.inline import currency_choice_ikm
-from bot.utils.helpers import get_monthly_summary
+from bot.utils.helpers import get_monthly_summary, create_default_categories
 
 start_router = Router()
 
@@ -31,8 +31,7 @@ async def cmd_start(message: Message, session: AsyncSession):
     is_new_user = user[1]
 
     if is_new_user:
-        # Send welcome message for new users
-        # welcome_text = format_welcome_message(message.from_user.first_name)
+        await create_default_categories(session, message.from_user.id)
         await message.answer("Welcome!", parse_mode="HTML")
 
         # Ask for currency preference
@@ -42,6 +41,7 @@ async def cmd_start(message: Message, session: AsyncSession):
             reply_markup=currency_choice_ikm(),
             parse_mode="HTML"
         )
+        await create_default_categories(session, message.from_user.id)
     else:
         # Returning user - show menu
         await show_main_menu(message)
@@ -126,21 +126,6 @@ async def menu_add_expense(callback: CallbackQuery):
         parse_mode="HTML"
     )
     await callback.answer()
-
-
-# @start_router.callback_query(F.data == "menu_today")
-# async def menu_today(callback: CallbackQuery, session: AsyncSession):
-#     """Show today's summary"""
-#     # Create a fake message object to reuse the handler
-#     await cmd_today(callback.message, session)
-#     await callback.answer()
-#
-#
-# @start_router.callback_query(F.data == "menu_recent")
-# async def menu_recent(callback: CallbackQuery, session: AsyncSession):
-#     """Show recent transactions"""
-#     await cmd_recent(callback.message, session)
-#     await callback.answer()
 
 
 @start_router.message(Command("help"))

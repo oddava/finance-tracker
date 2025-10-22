@@ -13,19 +13,21 @@ def currency_choice_ikm() -> InlineKeyboardMarkup:
 
     return ikb.as_markup()
 
-def get_category_keyboard(categories):
-    """
-    Build inline keyboard for category selection using InlineKeyboardBuilder.
-    categories: list of category objects with .id and .name
-    """
+
+def get_category_keyboard(categories) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    for category in categories:
-        builder.button(
-            text=category.name,
-            callback_data=f"cat_{category.id}"
-        )
+    if not categories:
+        print("⚠️ No categories passed to keyboard builder!")
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Other", callback_data="cat_9")]
+        ])
 
-    builder.adjust(2)
-
+    builder.row(
+        *[
+            InlineKeyboardButton(text=cat.name, callback_data=f"cat_{cat.id}")
+            for cat in categories
+        ],
+        width=2
+    )
     return builder.as_markup()

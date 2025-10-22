@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from sqlalchemy import Integer, String, DateTime, func
+from sqlalchemy import Integer, String, DateTime, func, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -15,8 +15,8 @@ class User(Model):
         SPENDER = "spender"
         UNKNOWN = "unknown"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10), default="en")
@@ -55,4 +55,4 @@ class User(Model):
 
 
     def __repr__(self):
-        return f"<User(id={self.id}, user_id={self.telegram_id}, name={self.first_name})>"
+        return f"<User(id={self.id}, user_id={self.user_id}, name={self.first_name})>"

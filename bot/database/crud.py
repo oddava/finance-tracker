@@ -34,7 +34,7 @@ class Model(Base):
             return obj
 
     @classmethod
-    async def get(cls: Type[T], id_: int, relationship: Optional[Any] = None) -> Optional[T]:
+    async def get(cls: Type[T], id_: int, relationship: Optional[Any] = None):
         """
         Get a record by ID.
 

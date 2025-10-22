@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, time
 import time as def_time
-from typing import Optional, Sequence, List, Dict
+from typing import Optional, Sequence, List, Dict, Any, Coroutine
 
 from aiogram.types import KeyboardButton
 from asyncpg.pgproto.pgproto import timedelta
@@ -45,41 +45,33 @@ async def create_default_categories(session: AsyncSession, user_id: int):
 
 
 async def get_user_categories(
-        session: AsyncSession,
         user_id: int,
         category_type: Optional[str] = None
 ) -> List[Category]:
     """Get all categories for a user (default + custom)"""
-    query = select(Category).where(Category.user_id == user_id)
 
     if category_type:
-        query = query.where(Category.type == category_type)
+        categories = await Category.filter_all(
+            criteria=((Category.user_id == user_id) & (Category.type == category_type))
+        )
+    else:
+        categories = await Category.filter_all(Category.user_id == user_id)
 
-    query = query.order_by(Category.is_default.desc(), Category.name)
+    categories = list(categories)
+    return categories
 
-    result = await session.execute(query)
-    return list(result.scalars().all())
 
 
 async def get_category_by_name(
-        session: AsyncSession,
         user_id: int,
         name: str
 ) -> Optional[Category]:
     """Find category by name (case-insensitive)"""
-    result = await session.execute(
-        select(Category).where(
-            and_(
-                Category.user_id == user_id,
-                func.lower(Category.name) == name.lower()
-            )
-        )
-    )
-    return result.scalar_one_or_none()
+    res = await Category.filter_first((Category.user_id == user_id) & (func.lower(Category.name) == name.lower()))
+    return res
 
 
 async def create_custom_category(
-        session: AsyncSession,
         user_id: int,
         name: str,
         icon_emoji: str,
@@ -87,22 +79,19 @@ async def create_custom_category(
         color: str = "#95A5A6"
 ) -> Category:
     """Create a custom category for user"""
-    category = Category(
-        user_id=user_id,
-        name=name,
-        icon_emoji=icon_emoji,
-        type=category_type,
-        color=color,
-        is_default=False
-    )
-    session.add(category)
-    await session.commit()
-    await session.refresh(category)
-    return category
+    category = {
+        "user_id": user_id,
+        "name": name,
+        "icon_emoji": icon_emoji,
+        "type": category_type,
+        "color": color,
+        "is_default": True,
+    }
+
+    return await Category.create(**category)
 
 
 async def create_transaction(
-        session: AsyncSession,
         user_id: int,
         amount: float,
         category_id: int,
@@ -114,21 +103,18 @@ async def create_transaction(
         photo_url: Optional[str] = None
 ) -> Transaction:
     """Create a new transaction"""
-    transaction = Transaction(
-        user_id=user_id,
-        type=transaction_type,
-        amount=amount,
-        category_id=category_id,
-        description=description or "",
-        date=date or datetime.now(),
-        payment_method=payment_method,
-        tags=tags or [],
-        photo_url=photo_url
-    )
-    session.add(transaction)
-    await session.commit()
-    await session.refresh(transaction)
-    return transaction
+    transaction = {
+        "user_id": user_id,
+        "type": transaction_type,
+        "amount": amount,
+        "category_id": category_id,
+        "description": description or "",
+        "date": date or datetime.now(),
+        "payment_method": payment_method,
+        "tags": tags or [],
+        "photo_url": photo_url
+    }
+    return await Transaction.create(**transaction)
 
 
 async def get_recent_transactions(
@@ -322,19 +308,15 @@ async def create_budget(
         alert_threshold: int = 80
 ) -> Budget:
     """Create a budget for a category"""
-    now = datetime.now()
-    budget = Budget(
-        user_id=user_id,
-        category_id=category_id,
-        amount=amount,
-        period=period,
-        alert_threshold=alert_threshold,
-        start_date=now
-    )
-    session.add(budget)
-    await session.commit()
-    await session.refresh(budget)
-    return budget
+    budget = {
+        "user_id": user_id,
+        "category_id": category_id,
+        "amount": amount,
+        "period": period,
+        "alert_threshold": alert_threshold,
+        "start_date": datetime.now()
+    }
+    return await Budget.create(**budget)
 
 
 async def get_budget_status(
@@ -369,12 +351,10 @@ async def get_budget_status(
 
     spent_result = await session.execute(
         select(func.sum(Transaction.amount)).where(
-            and_(
-                Transaction.user_id == user_id,
-                Transaction.category_id == category_id,
-                Transaction.type == "expense",
-                Transaction.date >= start_date
-            )
+            (Transaction.user_id == user_id) &
+            (Transaction.category_id == category_id) &
+            (Transaction.type == "expense") &
+            Transaction.date >= start_date
         )
     )
     spent = spent_result.scalar() or 0.0
@@ -430,11 +410,9 @@ async def get_spending_patterns(
             func.count(Transaction.id).label('count')
         )
         .where(
-            and_(
-                Transaction.user_id == user_id,
-                Transaction.type == "expense",
-                Transaction.date >= start_date
-            )
+            (Transaction.user_id == user_id) &
+            (Transaction.type == "expense") &
+            Transaction.date >= start_date
         )
         .group_by('day_of_week')
         .order_by('day_of_week')
@@ -456,11 +434,9 @@ async def get_spending_patterns(
         )
         .join(Transaction.category)
         .where(
-            and_(
-                Transaction.user_id == user_id,
-                Transaction.type == "expense",
-                Transaction.date >= start_date
-            )
+            (Transaction.user_id == user_id) &
+            (Transaction.type == "expense") &
+            Transaction.date >= start_date
         )
         .group_by(Category.name)
         .order_by(desc('total'))
@@ -619,41 +595,6 @@ async def create_category(
     return category
 
 
-async def create_default_expense_categories(session, user_id):
-    """Create default expense categories for new users"""
-    default_categories = [
-        {"name": "Food", "type": "expense", "color": "#FF9500"},
-        {"name": "Transport", "type": "expense", "color": "#007AFF"},
-        {"name": "Shopping", "type": "expense", "color": "#5856D6"},
-        {"name": "Bills", "type": "expense", "color": "#FF2D55"},
-        {"name": "Entertainment", "type": "expense", "color": "#34C759"}
-    ]
-
-    created_categories = []
-    for cat_data in default_categories:
-        category = await create_category(
-            session=session,
-            user_id=user_id,
-            name=cat_data["name"],
-            type=cat_data["type"],
-            color=cat_data["color"]
-        )
-        created_categories.append(category)
-
-    return created_categories
-
-
-async def create_default_category(session, user_id, name, _type, color="#007AFF"):
-    """Create a single default category"""
-    return await create_category(
-        session=session,
-        user_id=user_id,
-        name=name,
-        type=_type,
-        color=color
-    )
-
-
 async def maybe_show_streak(message, user, session):
     """Show streak or achievement message if applicable"""
     # This is a placeholder for streak/gamification features
@@ -686,8 +627,8 @@ async def count_transactions_today(session, user_id):
     result = await session.execute(
         select(func.count(Transaction.id))
         .where(
-            Transaction.user_id == user_id,
-            Transaction.created_at >= today_start,
+            (Transaction.user_id == user_id) &
+            (Transaction.created_at >= today_start) &
             Transaction.created_at <= today_end
         )
     )

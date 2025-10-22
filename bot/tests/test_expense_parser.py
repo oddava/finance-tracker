@@ -3,8 +3,6 @@ Comprehensive tests for ExpenseParser
 """
 import asyncio
 import time
-from typing import List, Dict
-
 import pytest
 from bot.services.expense_parser import ExpenseParser
 

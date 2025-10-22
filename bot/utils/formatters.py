@@ -2,7 +2,6 @@
 Text formatting utilities
 """
 from datetime import datetime
-from typing import Optional
 
 
 def format_amount(amount: float, currency: str = "UZS") -> str:

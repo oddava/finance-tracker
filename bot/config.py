@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     RATE_LIMIT_MESSAGES: int = Field()
     RATE_LIMIT_AI_CALLS: int = Field()
 
+    USE_WEBHOOK: bool = Field()
+    WEBHOOK_URL: str = Field()
+    WEBHOOK_PORT: int = Field()
+
     BACKUP_ENABLED: bool = Field()
     BACKUP_PATH: str = Field()
 
@@ -37,6 +41,6 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     class Config:
-        env_file = "../.env"
+        env_file = ".env"
 
 settings = Settings()
