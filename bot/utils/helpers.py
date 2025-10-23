@@ -1,18 +1,15 @@
-import asyncio
-from datetime import datetime, time
-import time as def_time
+from datetime import datetime, timezone
 from typing import Optional, Sequence, List, Dict, Any, Coroutine
 
 from aiogram.types import KeyboardButton
 from asyncpg.pgproto.pgproto import timedelta
+from slugify import slugify
 from sqlalchemy import select, func, desc, extract
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
-from thefuzz import fuzz
 
-from bot.database import Category, Transaction, Budget
-from bot.keyboards.inline import get_category_keyboard
+from bot.database import Category, Transaction, Budget, User
 
 
 async def create_default_categories(session: AsyncSession, user_id: int):
@@ -36,6 +33,8 @@ async def create_default_categories(session: AsyncSession, user_id: int):
         {"name": "Gift", "icon_emoji": "🎁", "type": "income", "color": "#52BE80"},
         {"name": "Other Income", "icon_emoji": "💵", "type": "income", "color": "#58D68D"},
     ]
+    for category in default_categories:
+        category["slug"] = slugify(category["name"])
 
     for cat_data in default_categories:
         category = Category(user_id=user_id, is_default=True, **cat_data)
@@ -59,16 +58,6 @@ async def get_user_categories(
 
     categories = list(categories)
     return categories
-
-
-
-async def get_category_by_name(
-        user_id: int,
-        name: str
-) -> Optional[Category]:
-    """Find category by name (case-insensitive)"""
-    res = await Category.filter_first((Category.user_id == user_id) & (func.lower(Category.name) == name.lower()))
-    return res
 
 
 async def create_custom_category(
@@ -371,27 +360,6 @@ async def get_budget_status(
     }
 
 
-async def get_all_budgets_status(
-        session: AsyncSession,
-        user_id: int
-) -> List[Dict]:
-    """Get status for all user budgets"""
-    result = await session.execute(
-        select(Budget)
-        .where(Budget.user_id == user_id)
-        .options(selectinload(Budget.category))
-    )
-    budgets = result.scalars().all()
-
-    statuses = []
-    for budget in budgets:
-        status = await get_budget_status(session, user_id, budget.category_id)
-        if status:
-            statuses.append(status)
-
-    return statuses
-
-
 # ==================== ANALYTICS ====================
 
 async def get_spending_patterns(
@@ -455,66 +423,6 @@ async def get_spending_patterns(
     }
 
 
-async def show_typing_periodically(bot, chat_id, interval=3.0, max_seconds=10):
-    """Show typing indicator periodically until cancelled or max time reached"""
-    start_time = def_time.time()
-    try:
-        while def_time.time() - start_time < max_seconds:
-            await bot.send_chat_action(chat_id, "typing")
-            await asyncio.sleep(interval)
-    except asyncio.CancelledError:
-        # Expected cancellation when response is ready
-        pass
-
-
-async def get_category_by_name_fuzzy(session, user_id, category_name, category_type):
-    """Get category by name with fuzzy matching for better UX"""
-    if not category_name:
-        return None
-
-    # Get all user categories of specified type
-    categories = await get_user_categories(session, user_id, category_type=category_type)
-
-    # Exact match first
-    for cat in categories:
-        if cat.name.lower() == category_name.lower():
-            return cat
-
-    # Then try fuzzy matching
-    best_match = None
-    best_score = 0
-
-    for cat in categories:
-        # Calculate fuzzy match score
-        score = fuzz.ratio(cat.name.lower(), category_name.lower())
-
-        # Check if this is a substring match
-        if cat.name.lower() in category_name.lower() or category_name.lower() in cat.name.lower():
-            score += 15  # Boost score for substring matches
-
-        if score > best_score and score >= 70:  # 70% similarity threshold
-            best_score = score
-            best_match = cat
-
-    return best_match
-
-
-async def get_smart_category_keyboard(session, user_id, categories):
-    """Create a keyboard with categories ordered by frequency of use"""
-    # Get usage statistics for categories
-    category_usage = await get_category_usage_stats(session, user_id)
-
-    # Sort categories by usage frequency
-    sorted_categories = sorted(
-        categories,
-        key=lambda cat: category_usage.get(cat.id, 0),
-        reverse=True
-    )
-
-    # Create keyboard with most used categories first
-    return get_category_keyboard(sorted_categories)
-
-
 def add_new_category_button(keyboard, category_name):
     """Add a button to create a new category with the suggested name"""
     # Add a new row with the "Create new category" button
@@ -523,22 +431,6 @@ def add_new_category_button(keyboard, category_name):
     # Check if the keyboard already has buttons
     if keyboard.keyboard:
         keyboard.keyboard.append([new_button])
-    else:
-        keyboard.keyboard = [[new_button]]
-
-    return keyboard
-
-
-def add_default_button(keyboard, button_text):
-    """Add a default/quick action button to the keyboard"""
-    new_button = KeyboardButton(text=f"✅ {button_text}")
-
-    # Add to the first row for prominence
-    if keyboard.keyboard:
-        if len(keyboard.keyboard[0]) < 2:  # If first row has space
-            keyboard.keyboard[0].append(new_button)
-        else:
-            keyboard.keyboard.insert(0, [new_button])  # New first row
     else:
         keyboard.keyboard = [[new_button]]
 
@@ -595,61 +487,190 @@ async def create_category(
     return category
 
 
-async def maybe_show_streak(message, user, session):
-    """Show streak or achievement message if applicable"""
-    # This is a placeholder for streak/gamification features
-    # You could implement daily streak tracking, achievements for consistent logging, etc.
+# ==================== STATISTICS FUNCTIONS ====================
 
-    # Example: Count transactions today
-    today_count = await count_transactions_today(session, user.user_id)
-
-    # First transaction of the day
-    if today_count == 1:
-        await message.answer(
-            "🔥 You've logged your first transaction today! Keep it up!",
-            parse_mode="HTML"
-        )
-    # Achievement for 5 transactions in a day
-    elif today_count == 5:
-        await message.answer(
-            "🏆 <b>Achievement unlocked:</b> Meticulous Tracker\n"
-            "You've logged 5 transactions today. Great job staying on top of your finances!",
-            parse_mode="HTML"
-        )
+async def get_total_users(session=None) -> int:
+    """Get total number of users"""
+    user_count = await User.count()
+    return user_count
 
 
-async def count_transactions_today(session, user_id):
-    """Count how many transactions the user has made today"""
-    today = datetime.now().date()
-    today_start = datetime.combine(today, time.min)
-    today_end = datetime.combine(today, time.max)
+async def get_active_users_today(session: AsyncSession) -> int:
+    """Get users who created transactions today"""
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
+    result = await session.execute(
+        select(func.count(func.distinct(Transaction.user_id)))
+        .where(Transaction.created_at >= today)
+    )
+    return result.scalar() or 0
+
+
+async def get_active_users_week(session: AsyncSession) -> int:
+    """Get users who created transactions this week"""
+    week_ago = datetime.now() - timedelta(days=7)
+
+    result = await session.execute(
+        select(func.count(func.distinct(Transaction.user_id)))
+        .where(Transaction.created_at >= week_ago)
+    )
+    return result.scalar() or 0
+
+
+async def get_new_users_today(session: AsyncSession) -> int:
+    """Get users who joined today"""
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    result = await session.execute(
+        select(func.count(User.user_id))
+        .where(User.created_at >= today)
+    )
+    return result.scalar() or 0
+
+
+async def get_transactions_count_today(session=None, user_id: int = None) -> int:
+    now_utc = datetime.now(timezone.utc)
+    today_utc = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if user_id:
+        return await Transaction.count((Transaction.created_at >= today_utc) & (Transaction.user_id == user_id))
+    return await Transaction.count(Transaction.created_at >= today_utc)
+
+
+async def get_transactions_today(user_id: int) -> Sequence[Transaction]:
+    now_utc = datetime.now(timezone.utc)
+    today_utc = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+    transactions = await Transaction.filter_all(
+        (Transaction.created_at >= today_utc) & (Transaction.user_id == user_id),
+        relationship=Transaction.category
+    )
+
+    return transactions
+
+
+async def get_transactions_count_total(session: AsyncSession) -> int:
+    """Get total transactions ever"""
     result = await session.execute(
         select(func.count(Transaction.id))
-        .where(
-            (Transaction.user_id == user_id) &
-            (Transaction.created_at >= today_start) &
-            Transaction.created_at <= today_end
-        )
     )
+    return result.scalar() or 0
 
-    return result.scalar_one()
 
-
-async def get_category_usage_stats(session, user_id, days=30):
-    """Get category usage statistics for smart ordering"""
-    # Get date for filtering recent transactions
-    recent_date = datetime.now() - timedelta(days=days)
-
-    # Query to count transactions by category
+async def get_total_transaction_volume(session: AsyncSession) -> Dict:
+    """Get total money tracked (expenses and income)"""
     result = await session.execute(
-        select(Transaction.category_id, func.count(Transaction.id).label('count'))
-        .where(
-            Transaction.user_id == user_id,
-            Transaction.created_at >= recent_date
+        select(
+            Transaction.type,
+            func.sum(Transaction.amount).label('total')
         )
-        .group_by(Transaction.category_id)
+        .group_by(Transaction.type)
     )
 
-    # Convert to dictionary {category_id: count}
-    return {row[0]: row[1] for row in result.all()}
+    volumes = {'expense': 0, 'income': 0}
+    for row in result:
+        volumes[row.type] = row.total or 0
+
+    return volumes
+
+
+async def get_top_users_by_transactions(
+        session: AsyncSession,
+        limit: int = 10
+) -> List[Dict]:
+    """Get most active users by transaction count"""
+    result = await session.execute(
+        select(
+            User.user_id,
+            User.username,
+            User.first_name,
+            func.count(Transaction.id).label('txn_count')
+        )
+        .join(Transaction, Transaction.user_id == User.user_id)
+        .group_by(User.user_id, User.username, User.first_name)
+        .order_by(desc('txn_count'))
+        .limit(limit)
+    )
+
+    return [
+        {
+            'user_id': row.user_id,
+            'username': row.username,
+            'first_name': row.first_name,
+            'count': row.txn_count
+        }
+        for row in result
+    ]
+
+
+async def get_popular_categories(
+        session: AsyncSession,
+        limit: int = 10
+) -> List[Dict]:
+    """Get most used categories"""
+    result = await session.execute(
+        select(
+            Category.name,
+            Category.icon_emoji,
+            func.count(Transaction.id).label('usage_count')
+        )
+        .join(Transaction, Transaction.category_id == Category.id)
+        .group_by(Category.id, Category.name, Category.icon_emoji)
+        .order_by(desc('usage_count'))
+        .limit(limit)
+    )
+
+    return [
+        {
+            'name': row.name,
+            'icon': row.icon_emoji,
+            'count': row.usage_count
+        }
+        for row in result
+    ]
+
+
+async def get_user_retention_stats(session: AsyncSession) -> Dict:
+    """Calculate user retention (users who came back after first day)"""
+    # Users created more than 1 day ago
+    one_day_ago = datetime.now() - timedelta(days=1)
+
+    result = await session.execute(
+        select(func.count(User.user_id))
+        .where(User.created_at < one_day_ago)
+    )
+    old_users = result.scalar() or 0
+
+    if old_users == 0:
+        return {'retention_rate': 0, 'retained_users': 0, 'total_old_users': 0}
+
+    # Of those, how many have transactions after their first day?
+    result = await session.execute(
+        select(func.count(func.distinct(User.user_id)))
+        .select_from(User)
+        .join(Transaction, Transaction.user_id == User.user_id)
+        .where(
+            and_(
+                User.created_at < one_day_ago,
+                Transaction.created_at > User.created_at + timedelta(days=1)
+            )
+        )
+    )
+    retained = result.scalar() or 0
+
+    return {
+        'retention_rate': round((retained / old_users) * 100, 1),
+        'retained_users': retained,
+        'total_old_users': old_users
+    }
+
+
+async def get_database_size(session: AsyncSession) -> Optional[str]:
+    """Get database size (PostgreSQL only)"""
+    try:
+        from sqlalchemy import text
+        result = await session.execute(
+            text("SELECT pg_size_pretty(pg_database_size(current_database()))")
+        )
+        return result.scalar()
+    except Exception:
+        return None

@@ -2,10 +2,7 @@
 Refined expense parser with better accuracy, multi-expense support, and income detection
 """
 import re
-import json
-from typing import Dict, Optional, List, Tuple
-from openai import AsyncOpenAI
-
+from typing import Dict, Optional, List, Tuple, Sequence
 
 class ExpenseParser:
     """
@@ -13,12 +10,9 @@ class ExpenseParser:
     - Strict confidence scoring (fixes test failures)
     - Multi-expense support ("45k taxi, 15k snacks")
     - Income/expense detection
-    - Smart AI fallback
     """
 
-    def __init__(self, openai_api_key: Optional[str] = None):
-        self.client = AsyncOpenAI(api_key=openai_api_key) if openai_api_key else None
-
+    def __init__(self,):
         # Compile regex patterns once for performance
         self.amount_pattern = re.compile(
             r'(?:^|\s|,)(\d+(?:[.,]\d+)?)\s*(?:k|к|thousand|тысяч|т|thous)?(?:\s|,|$)',
@@ -68,7 +62,7 @@ class ExpenseParser:
                 'weight': 1.8
             },
             'healthcare': {
-                'primary': ['doctor', 'hospital', 'pharmacy', 'medicine',
+                'primary': ['doctor', 'hospital', 'pharmacy', 'medicine', 'pills',
                             'врач', 'больница', 'аптека', 'лекарство'],
                 'secondary': ['clinic', 'dental', 'health'],
                 'weight': 1.5
@@ -77,7 +71,7 @@ class ExpenseParser:
 
         # Income indicators (strong signals)
         self.income_indicators = {
-            'strong': ['received', 'got paid', 'earned', 'salary', 'income', 'paycheck',
+            'strong': ['received', 'gift', 'got paid', 'earned', 'salary', 'income', 'paycheck',
                        'получил', 'зарплата', 'доход', 'оплата получена'],
             'weak': ['got', 'получил деньги']
         }
@@ -93,7 +87,7 @@ class ExpenseParser:
             self,
             text: str,
             user_id: int,
-            user_categories: Optional[List] = None
+            user_categories: Optional[Sequence] = None
     ) -> Dict:
         """
         Parse expense/income from text
@@ -120,7 +114,6 @@ class ExpenseParser:
 
         total_amounts = len(amounts) + len(currency_amounts)
 
-        # Multiple expenses if: 2+ amounts AND commas present
         return total_amounts >= 2 and ',' in text
 
     async def _parse_multiple(
@@ -143,9 +136,14 @@ class ExpenseParser:
 
             result = await self._parse_single(part, user_id, user_categories)
 
-            # Only include if we got at least an amount
-            if result['amount']:
-                transactions.append(result)
+            if result.get('amount'):  # Only add if valid
+                transactions.append({
+                    'amount': result['amount'],
+                    'category': result.get('category'),
+                    'description': result.get('description', ''),
+                    'confidence': result.get('confidence', 0.5),
+                    'type': result.get('type', 'expense'),
+                })
 
         if not transactions:
             # Failed to parse any - return single parse attempt
@@ -178,19 +176,6 @@ class ExpenseParser:
         # Adjust confidence based on type detection
         if type_confidence < 0.7:
             result['confidence'] *= 0.9  # Slight penalty for unclear type
-
-        # STRICT confidence evaluation - should we use AI?
-        should_use_ai = self._should_use_ai(result, text)
-
-        if should_use_ai and self.client:
-            # Use AI for better accuracy
-            ai_result = await self._parse_with_ai(text, user_id, user_categories, transaction_type)
-
-            # Use AI result if significantly better
-            if ai_result['confidence'] > result['confidence'] + 0.15:
-                return ai_result
-            elif ai_result['category'] and not result['category']:
-                return ai_result
 
         # Mark if needs clarification
         if result['confidence'] < 0.5:
@@ -265,6 +250,16 @@ class ExpenseParser:
             len(matched_keywords),
             text_lower
         )
+        data = {
+            'amount': amount,
+            'category': category,
+            'description': description,
+            'confidence': confidence,
+            'method': 'rule_based',
+            'matched_keywords': matched_keywords,
+            'raw_text': text,
+            'type': self._detect_transaction_type(text)[0]
+        }
 
         return {
             'amount': amount,
@@ -273,7 +268,8 @@ class ExpenseParser:
             'confidence': confidence,
             'method': 'rule_based',
             'matched_keywords': matched_keywords,
-            'raw_text': text
+            'raw_text': text,
+            'type': self._detect_transaction_type(text)[0]
         }
 
     def _extract_amount_improved(self, text: str) -> Tuple[Optional[float], float]:
@@ -485,93 +481,3 @@ class ExpenseParser:
             text = text[:97] + '...'
 
         return text if text else "Transaction"
-
-    async def _parse_with_ai(
-            self,
-            text: str,
-            user_categories: Optional[List] = None,
-            transaction_type: str = 'expense'
-    ) -> Dict:
-        """
-        AI-powered parsing with improved prompting
-        """
-        if not self.client:
-            return {
-                'amount': None,
-                'category': None,
-                'description': text,
-                'confidence': 0.0,
-                'method': 'ai_unavailable',
-                'type': transaction_type
-            }
-
-        # Build category list
-        if user_categories:
-            categories_str = ', '.join([cat.name for cat in user_categories[:15]])
-        else:
-            categories_str = "food, transport, groceries, shopping, entertainment, bills, healthcare"
-
-        # Enhanced prompt
-        prompt = f"""Parse this {transaction_type} message. Fix typos and extract clean data.
-
-Message: "{text}"
-
-Categories: {categories_str}
-
-Extract:
-1. Amount (handle "k"=thousand, "thous"=thousand)
-2. Best matching category
-3. Clean 2-3 word description
-
-Return ONLY JSON:
-{{
-  "amount": <number or null>,
-  "category": "<exact category or null>",
-  "description": "<2-3 words>"
-}}
-
-Examples:
-"bough sum snacks for like 20thous" → {{"amount": 20000, "category": "groceries", "description": "snacks"}}
-"i just ate sushi for 50k" → {{"amount": 50000, "category": "food", "description": "sushi"}}
-"received 5k salary" → {{"amount": 5000, "category": null, "description": "salary"}}
-"50k taxi!" → {{"amount": 50000, "category": "transport", "description": "taxi"}}
-"spent $50" → {{"amount": 50, "category": null, "description": "spent"}}"""
-
-        try:
-            response = await self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "Parse financial messages. Fix typos. Return ONLY valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=150,
-                response_format={"type": "json_object"}
-            )
-
-            result = json.loads(response.choices[0].message.content)
-
-            # Validate
-            amount = float(result.get('amount')) if result.get('amount') else None
-            category = result.get('category')
-
-            return {
-                'amount': amount,
-                'category': category,
-                'description': result.get('description', text)[:50],
-                'confidence': 0.92,
-                'method': 'ai_enhanced',
-                'type': transaction_type,
-                'matched_keywords': [],
-                'needs_clarification': False
-            }
-
-        except Exception as e:
-            return {
-                'amount': None,
-                'category': None,
-                'description': text,
-                'confidence': 0.1,
-                'method': f'ai_error: {str(e)}',
-                'type': transaction_type
-            }

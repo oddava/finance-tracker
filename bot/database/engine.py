@@ -37,6 +37,9 @@ class DatabaseManager:
         self._engine: Optional[AsyncEngine] = None
         self._session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
+    def __getattr__(self, name):
+        return getattr(self._session_factory, name)
+
     async def init(self, database_url: Optional[str] = None) -> None:
         """
         Initialize async database engine and session factory.
@@ -55,7 +58,8 @@ class DatabaseManager:
             echo=False,
             pool_pre_ping=True,
             pool_size=10,
-            max_overflow=20
+            max_overflow=20,
+            pool_recycle=3600,
         )
 
         self._session_factory = async_sessionmaker(

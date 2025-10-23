@@ -6,7 +6,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bot.database.crud import Model
 
-
 class Category(Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), index=True)
@@ -15,6 +14,7 @@ class Category(Model):
     color: Mapped[str] = mapped_column(String(7), default="#95A5A6")  # Hex color
     type: Mapped[str] = mapped_column(String(20))  # 'expense' or 'income'
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    slug: Mapped[str] = mapped_column(String(100), default="#")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
@@ -30,4 +30,6 @@ class Category(Model):
     )
 
     def __repr__(self):
+        return f"<Category(id={self.id}, name={self.name}, type={self.type})>"
+    def __str__(self):
         return f"<Category(id={self.id}, name={self.name}, type={self.type})>"

@@ -18,7 +18,6 @@ class MaintenanceMiddleware(BaseMiddleware):
             data: Dict[str, Any],
     ) -> Any:
         maintenance_mode = settings.MAINTENANCE_MODE
-        logger.info(f"Maintenance mode: {maintenance_mode}")
         if not maintenance_mode:
             return await handler(event, data)
         # Log maintenance mode access attempt

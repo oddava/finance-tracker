@@ -18,12 +18,11 @@ class Transaction(Model):
 
     date: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
     payment_method: Mapped[str] = mapped_column(String(50), default="cash")  # cash, card, online
-
     # Optional fields
     photo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     tags: Mapped[list] = mapped_column(JSON, default=list)  # ['food', 'lunch', 'restaurant']
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),

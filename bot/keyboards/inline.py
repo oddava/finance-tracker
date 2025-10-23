@@ -20,7 +20,8 @@ def get_category_keyboard(categories) -> InlineKeyboardMarkup:
     if not categories:
         print("⚠️ No categories passed to keyboard builder!")
         return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Other", callback_data="cat_9")]
+            [InlineKeyboardButton(text="Other", callback_data="cat_9")],
+            [InlineKeyboardButton(text="Cancel", callback_data="cancel")],
         ])
 
     builder.row(

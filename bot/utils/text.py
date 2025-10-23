@@ -10,9 +10,7 @@ def get_menu_text() -> str:
         "What would you like to do?\n\n"
         "<b>Quick Commands:</b>\n"
         "• Just type: <code>50k taxi</code>\n"
-        "• /add - Add expense step-by-step\n"
         "• /today - Today's summary\n"
-        "• /month - Monthly report\n"
         "• /recent - Recent transactions\n"
         "• /help - Get help"
     )
@@ -25,30 +23,30 @@ def get_help_text() -> str:
         "• Natural: <code>50k taxi</code>\n"
         "• Natural: <code>lunch 25000</code>\n"
         "• Natural: <code>spent 150 on groceries</code>\n"
-        "• Manual: /add (step-by-step)\n\n"
 
         "<b>📊 View Reports:</b>\n"
         "• /today - Today's expenses\n"
-        "• /week - This week's summary\n"
-        "• /month - Monthly breakdown\n"
+        "• /week [soon] - This week's summary\n"
+        "• /month [soon] - Monthly breakdown\n"
         "• /recent - Last 10 transactions\n\n"
 
-        "<b>🎯 Budgets:</b>\n"
+        "<b>🎯 Budgets [soon]:</b>\n"
         "• /budget - Set/view budgets\n"
         "• /budgets - All budgets status\n\n"
 
-        "<b>💰 Income:</b>\n"
-        "• /income - Add income\n\n"
-
-        "<b>⚙️ Settings:</b>\n"
+        "<b>⚙️ Settings [soon]:</b>\n"
         "• /settings - Change preferences\n"
         "• /currency - Change currency\n"
         "• /categories - Manage categories\n\n"
 
-        "<b>📈 Analytics:</b>\n"
+        "<b>📈 Analytics [soon]:</b>\n"
         "• /insights - AI-powered insights\n"
         "• /compare - Compare periods\n"
         "• /export - Export data to Excel\n\n"
+
+        "<b>📚 Other:</b>\n"
+        "• /about - About the bot\n"
+        "• /feedback - Report issues\n\n"
     )
 
 def get_about_text(user: User, monthly_summary: Dict) -> str:
@@ -82,8 +80,8 @@ def get_feedback_text() -> str:
         "We'd love to hear from you!\n\n"
 
         "📧 <b>Contact:</b>\n"
-        "• Email: support@financebot.com\n"
-        "• Telegram: @YourSupportBot\n\n"
+        "• Email: oddava@proton.me\n"
+        "• Telegram: @notJony\n\n"
 
         "🐛 <b>Report Issues:</b>\n"
         "Found a bug? Let us know!\n\n"

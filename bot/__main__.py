@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 import uvicorn
 import uvloop
@@ -8,11 +9,14 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import Update
 from loguru import logger
+from sqlalchemy import text
 
 from bot.core.config import settings
 from bot.database import init_database, close_database, BotSetting
+from bot.database.engine import db
 from bot.handlers import router
 from bot.middlewares import register_middleware
+from bot.utils.helpers import get_transactions_count_today, get_total_users
 from bot.utils.logging_config import setup_sentry
 
 TOKEN = settings.BOT_TOKEN
@@ -115,12 +119,36 @@ async def webhook(
 
     return {"ok": True}
 
-
+bot_start_time = datetime.now()
 @app.get("/health")
-async def health():
-    """Health check endpoint"""
-    return {"status": "ok"}
+async def health_check():
+    """Health check for monitoring"""
+    uptime = (datetime.now() - bot_start_time).total_seconds()
 
+    try:
+        async with db.session() as session:
+            await session.execute(text("SELECT 1"))
+        db_status = "healthy"
+    except Exception as e:
+        print(f"Health check DB error: {e}")
+        db_status = "unhealthy"
+
+    return {
+        "status": "ok" if db_status == "healthy" else "degraded",
+        "uptime_seconds": uptime,
+        "database": db_status,
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/metrics")
+async def metrics():
+    """Basic metrics endpoint"""
+    # Add your metrics here
+    return {
+        "total_users": await get_total_users(),
+        "transactions_today": await get_transactions_count_today(),
+    }
 
 async def main():
     """Main entry point for polling mode"""
@@ -131,12 +159,20 @@ async def main():
 
 
 if __name__ == "__main__":
+    if settings.DEBUG:
+        log_level = "DEBUG"
+    else:
+        log_level = "INFO"
+
     logger.add(
-        "logs/telegram_bot.log",
-        level="DEBUG",
-        format="{time} | {level} | {module}:{function}:{line} | {message}",
-        rotation="100 KB",
+        "logs/bot_{time:YYYY-MM-DD}.log",
+        level=log_level,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
+        rotation="100 MB",
+        retention="30 days",
         compression="zip",
+        backtrace=True,
+        diagnose=True if settings.DEBUG else False,
     )
 
     if settings.USE_WEBHOOK:

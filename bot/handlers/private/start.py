@@ -5,6 +5,7 @@ import random
 from datetime import datetime
 
 from aiogram import Router, F
+from aiogram.fsm.state import StatesGroup
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,6 @@ from loguru import logger
 from bot.utils.text import get_help_text, get_about_text, get_menu_text, get_feedback_text
 
 start_router = Router()
-
 
 @start_router.message(CommandStart())
 async def cmd_start(message: Message, session: AsyncSession) -> None:

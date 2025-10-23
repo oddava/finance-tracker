@@ -14,8 +14,8 @@ def setup_sentry():
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             enable_tracing=True,
-            traces_sample_rate=1.0,
-            profiles_sample_rate=1.0,
+            traces_sample_rate=0.1,
+            profiles_sample_rate=0.1,
             integrations=[sentry_loguru],
             environment=settings.ENVIRONMENT,
             enable_logs=settings.ENABLE_LOGS,
