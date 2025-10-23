@@ -6,9 +6,9 @@ def currency_choice_ikm() -> InlineKeyboardMarkup:
     ikb = InlineKeyboardBuilder()
 
     ikb.row(
-        InlineKeyboardButton(text="USD($)", callback_data="currency_set_USD"),
-        InlineKeyboardButton(text="RUB(₽)", callback_data="currency_set_RUB"),
-        InlineKeyboardButton(text="UZS(сўм)", callback_data="currency_set_UZS"),
+        InlineKeyboardButton(text="[$]USD", callback_data="currency_set_USD"),
+        InlineKeyboardButton(text="[₽]RUB", callback_data="currency_set_RUB"),
+        InlineKeyboardButton(text="[сўм]UZS", callback_data="currency_set_UZS"),
     )
 
     return ikb.as_markup()

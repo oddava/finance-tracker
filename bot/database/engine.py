@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase
 
-from bot.config import settings
+from bot.core.config import settings
+
 
 # ==================== Base Classes ====================
 

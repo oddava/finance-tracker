@@ -1,6 +1,9 @@
 """
 Start command and main menu handlers
 """
+import random
+from datetime import datetime
+
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
@@ -10,45 +13,45 @@ from bot.database import User
 from bot.keyboards.inline import currency_choice_ikm
 from bot.utils.helpers import get_monthly_summary, create_default_categories
 
+from loguru import logger
+
+from bot.utils.text import get_help_text, get_about_text, get_menu_text, get_feedback_text
+
 start_router = Router()
 
 
 @start_router.message(CommandStart())
-async def cmd_start(message: Message, session: AsyncSession):
+async def cmd_start(message: Message, session: AsyncSession) -> None:
     """Handle /start command - welcome new users"""
+    logger.info(f"User {message.from_user.id} has started the bot.")
 
-    # Get or create user
-    user = await User.get_or_create(
+    user_data = message.from_user.model_dump(include={'first_name', 'language_code', 'username'})
+    user, created = await User.get_or_create(
         user_id=message.from_user.id,
-        defaults={
-            "first_name": message.from_user.first_name,
-            "language_code": message.from_user.language_code,
-            "username": message.from_user.username,
-        }
+        defaults=dict(user_data)
     )
 
-    # Check if this is a new user
-    is_new_user = user[1]
-
-    if is_new_user:
-        await create_default_categories(session, message.from_user.id)
-        await message.answer("Welcome!", parse_mode="HTML")
-
-        # Ask for currency preference
+    if not created:
+        menu_text = get_menu_text()
         await message.answer(
-            "💱 <b>First, let's set your currency:</b>\n\n"
-            "Select your preferred currency:",
-            reply_markup=currency_choice_ikm(),
+            text=menu_text,
             parse_mode="HTML"
         )
-        await create_default_categories(session, message.from_user.id)
-    else:
-        # Returning user - show menu
-        await show_main_menu(message)
+        return
+
+    await message.answer("Welcome!", parse_mode="HTML")
+
+    await message.answer(
+        "💱 <b>First, let's set your currency:</b>\n\n"
+        "Select your preferred currency:",
+        reply_markup=currency_choice_ikm(),
+        parse_mode="HTML"
+    )
+    await create_default_categories(session, message.from_user.id)
 
 
 @start_router.callback_query(F.data.startswith("currency_set_"))
-async def currency_selected(callback: CallbackQuery, session: AsyncSession):
+async def currency_selected(callback: CallbackQuery):
     """Handle currency selection"""
 
     currency = callback.data.split("_")[2]
@@ -62,116 +65,17 @@ async def currency_selected(callback: CallbackQuery, session: AsyncSession):
         f"✅ Currency set to: {currency}\n\n"
         "Perfect! You're all set up.\n\n"
         "<b>Try your first expense:</b>\n"
-        "• Type: <code>50k taxi</code>\n"
-        "• Or use: /add\n\n"
+        "• Example: <code>50k taxi</code>\n"
         "Let's get started! 🚀",
         parse_mode="HTML"
     )
 
     await callback.answer()
 
-
-@start_router.message(Command("menu"))
-async def cmd_menu(message: Message, session: AsyncSession):
-    """Show main menu"""
-    await show_main_menu(message)
-
-
-async def show_main_menu(message: Message):
-    """Display main menu with all options"""
-
-    menu_text = (
-        "🏠 <b>Main Menu</b>\n\n"
-        "What would you like to do?\n\n"
-        "<b>Quick Commands:</b>\n"
-        "• Just type: <code>50k taxi</code>\n"
-        "• /add - Add expense step-by-step\n"
-        "• /today - Today's summary\n"
-        "• /month - Monthly report\n"
-        "• /recent - Recent transactions\n"
-        "• /help - Get help"
-    )
-
-    await message.answer(
-        menu_text,
-        # reply_markup=get_main_menu_keyboard(),
-        parse_mode="HTML"
-    )
-
-
-@start_router.callback_query(F.data == "menu_main")
-async def menu_main_callback(callback: CallbackQuery):
-    """Handle main menu button"""
-    menu_text = (
-        "🏠 <b>Main Menu</b>\n\n"
-        "What would you like to do?"
-    )
-
-    await callback.message.edit_text(
-        menu_text,
-        # reply_markup=get_main_menu_keyboard(),
-        parse_mode="HTML"
-    )
-    await callback.answer()
-
-
-@start_router.callback_query(F.data == "menu_add_expense")
-async def menu_add_expense(callback: CallbackQuery):
-    """Redirect to add expense"""
-    await callback.message.answer(
-        "💸 <b>Add Expense</b>\n\n"
-        "How much did you spend?\n"
-        "Example: 50000 or 50k\n\n"
-        "Send /cancel to abort.",
-        parse_mode="HTML"
-    )
-    await callback.answer()
-
-
 @start_router.message(Command("help"))
 async def cmd_help(message: Message):
     """Show help message"""
-
-    help_text = (
-        "❓ <b>How to Use Finance Tracker Bot</b>\n\n"
-
-        "<b>📝 Logging Expenses:</b>\n"
-        "• Natural: <code>50k taxi</code>\n"
-        "• Natural: <code>lunch 25000</code>\n"
-        "• Natural: <code>spent 150 on groceries</code>\n"
-        "• Manual: /add (step-by-step)\n\n"
-
-        "<b>📊 View Reports:</b>\n"
-        "• /today - Today's expenses\n"
-        "• /week - This week's summary\n"
-        "• /month - Monthly breakdown\n"
-        "• /recent - Last 10 transactions\n\n"
-
-        "<b>🎯 Budgets:</b>\n"
-        "• /budget - Set/view budgets\n"
-        "• /budgets - All budgets status\n\n"
-
-        "<b>💰 Income:</b>\n"
-        "• /income - Add income\n\n"
-
-        "<b>⚙️ Settings:</b>\n"
-        "• /settings - Change preferences\n"
-        "• /currency - Change currency\n"
-        "• /categories - Manage categories\n\n"
-
-        "<b>📈 Analytics:</b>\n"
-        "• /insights - AI-powered insights\n"
-        "• /compare - Compare periods\n"
-        "• /export - Export data to Excel\n\n"
-
-        "<b>Other:</b>\n"
-        "• /menu - Show main menu\n"
-        "• /cancel - Cancel current operation\n"
-        "• /help - Show this message\n\n"
-
-        "💡 <b>Pro Tip:</b> Just type naturally! The bot understands:\n"
-        "\"50k taxi\", \"bought groceries 120\", \"coffee 15000\""
-    )
+    help_text = get_help_text()
 
     await message.answer(help_text, parse_mode="HTML")
 
@@ -180,43 +84,20 @@ async def cmd_help(message: Message):
 async def cmd_about(message: Message, session: AsyncSession):
     """Show bot information and user stats"""
 
-    user = await User.get_or_create(
+    user, created = await User.get_or_create(
         user_id=message.from_user.id
     )
-    user = user[0]
 
     # Get user statistics
-    from datetime import datetime
     current_month = datetime.now()
     monthly_summary = await get_monthly_summary(
         session,
-        user.id,
+        user.user_id,
         current_month.year,
         current_month.month
     )
 
-    about_text = (
-        "ℹ️ <b>About Finance Tracker Bot</b>\n\n"
-
-        "🤖 Smart personal finance tracking made easy!\n\n"
-
-        "<b>Your Stats:</b>\n"
-        f"📅 Member since: {user.created_at.strftime('%d %b %Y')}\n"
-        f"💰 Currency: {user.currency}\n"
-        f"📝 This month: {monthly_summary['transaction_count']} transactions\n"
-        f"💸 Total spent: {monthly_summary['total_expenses']:,.0f} {user.currency}\n\n"
-
-        "<b>Features:</b>\n"
-        "✅ Natural language expense logging\n"
-        "✅ Budget tracking & alerts\n"
-        "✅ Smart insights & analytics\n"
-        "✅ Visual reports & charts\n"
-        "✅ Multiple currencies support\n"
-        "✅ Data export (Excel/CSV)\n\n"
-
-        "Made with ❤️ using Aiogram & OpenAI\n"
-        "Version: 1.0.0"
-    )
+    about_text = get_about_text(user, monthly_summary)
 
     await message.answer(about_text, parse_mode="HTML")
 
@@ -225,24 +106,7 @@ async def cmd_about(message: Message, session: AsyncSession):
 async def cmd_feedback(message: Message):
     """Show feedback/support information"""
 
-    feedback_text = (
-        "💬 <b>Feedback & Support</b>\n\n"
-
-        "We'd love to hear from you!\n\n"
-
-        "📧 <b>Contact:</b>\n"
-        "• Email: support@financebot.com\n"
-        "• Telegram: @YourSupportBot\n\n"
-
-        "🐛 <b>Report Issues:</b>\n"
-        "Found a bug? Let us know!\n\n"
-
-        "⭐ <b>Feature Requests:</b>\n"
-        "Have an idea? We're listening!\n\n"
-
-        "🌟 <b>Rate Us:</b>\n"
-        "Enjoying the bot? Share with friends!"
-    )
+    feedback_text = get_feedback_text()
 
     await message.answer(feedback_text, parse_mode="HTML")
 
@@ -260,7 +124,6 @@ async def handle_greetings(message: Message):
         "Hello! Start by telling me what you spent. 😊"
     ]
 
-    import random
     await message.answer(random.choice(greetings))
 
 
@@ -277,5 +140,4 @@ async def handle_thanks(message: Message):
         "My pleasure! 🎉"
     ]
 
-    import random
     await message.answer(random.choice(responses))

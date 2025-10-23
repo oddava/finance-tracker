@@ -155,7 +155,7 @@ async def get_transactions_by_period(
     if transaction_type:
         query = query.where(Transaction.type == transaction_type)
 
-    query = query.options(selectinload(Transaction.category_id))
+    query = query.options(selectinload(Transaction.category))
     query = query.order_by(desc(Transaction.date))
 
     result = await session.execute(query)

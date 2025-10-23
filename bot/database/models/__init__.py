@@ -4,3 +4,4 @@ from .budget import Budget
 from .categories import Category
 from .transactions import Transaction
 from .subscriptions import Subscription
+from .bot_settings import BotSetting

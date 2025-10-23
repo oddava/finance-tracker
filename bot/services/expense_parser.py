@@ -4,9 +4,7 @@ Refined expense parser with better accuracy, multi-expense support, and income d
 import re
 import json
 from typing import Dict, Optional, List, Tuple
-from datetime import datetime
 from openai import AsyncOpenAI
-from functools import lru_cache
 
 
 class ExpenseParser:
