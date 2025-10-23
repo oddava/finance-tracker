@@ -1,6 +1,6 @@
 import ssl
 from contextlib import asynccontextmanager
-from typing import Optional, Any, Coroutine
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker, AsyncEngine
 from sqlalchemy.ext.declarative import declared_attr
