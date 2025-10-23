@@ -89,12 +89,6 @@ async def on_shutdown():
     await close_database()
     await bot.delete_webhook(drop_pending_updates=False)
 
-    # Wait for pending tasks (max 30 seconds)
-    pending = [t for t in asyncio.all_tasks() if not t.done()]
-    if pending:
-        logger.info(f"Waiting for {len(pending)} pending tasks...")
-        await asyncio.wait(pending, timeout=30)
-
     await bot.session.close()
     logger.success("✅ Bot stopped successfully")
 
