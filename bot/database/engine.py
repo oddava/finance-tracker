@@ -1,3 +1,4 @@
+import ssl
 from contextlib import asynccontextmanager
 from typing import Optional, Any, Coroutine
 
@@ -7,6 +8,10 @@ from sqlalchemy.orm import DeclarativeBase
 
 from bot.core.config import settings
 
+
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 # ==================== Base Classes ====================
 
@@ -55,6 +60,7 @@ class DatabaseManager:
 
         self._engine = create_async_engine(
             url,
+            connect_args={"ssl": ssl_context},
             echo=False,
             pool_pre_ping=True,
             pool_size=10,
