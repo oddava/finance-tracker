@@ -25,6 +25,7 @@ settings_router = Router()
 @settings_router.message(Command("settings"))
 async def cmd_settings(message: Message):
     """Show settings menu"""
+    await message.delete()
     user = await User.get(message.from_user.id)
     await send_settings_menu(message, user)
 
