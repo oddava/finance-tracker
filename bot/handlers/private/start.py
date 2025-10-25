@@ -20,10 +20,12 @@ from bot.utils.text import get_help_text, get_about_text, get_menu_text, get_fee
 
 start_router = Router()
 
+
 @start_router.message(CommandStart())
 async def cmd_start(message: Message, session: AsyncSession) -> None:
+    """Handle /start command - welcome new users"""
+
     async with measure("start_handler"):
-        """Handle /start command - welcome new users"""
         logger.info(f"User {message.from_user.id} has started the bot.")
 
         user_data = message.from_user.model_dump(include={'first_name', 'language_code', 'username'})
@@ -74,6 +76,7 @@ async def currency_selected(callback: CallbackQuery):
 
     await callback.answer()
 
+
 @start_router.message(Command("help"))
 async def cmd_help(message: Message):
     """Show help message"""
@@ -86,22 +89,23 @@ async def cmd_help(message: Message):
 async def cmd_about(message: Message, session: AsyncSession):
     """Show bot information and user stats"""
 
-    user, created = await User.get_or_create(
-        user_id=message.from_user.id
-    )
+    async with measure("about_handler"):
+        user, created = await User.get_or_create(
+            user_id=message.from_user.id
+        )
 
-    # Get user statistics
-    current_month = datetime.now()
-    monthly_summary = await get_monthly_summary(
-        session,
-        user.user_id,
-        current_month.year,
-        current_month.month
-    )
+        # Get user statistics
+        current_month = datetime.now()
+        monthly_summary = await get_monthly_summary(
+            session,
+            user.user_id,
+            current_month.year,
+            current_month.month
+        )
 
-    about_text = get_about_text(user, monthly_summary)
+        about_text = get_about_text(user, monthly_summary)
 
-    await message.answer(about_text, parse_mode="HTML")
+        await message.answer(about_text, parse_mode="HTML")
 
 
 @start_router.message(Command("feedback"))
