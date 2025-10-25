@@ -9,9 +9,9 @@ from sqlalchemy.orm import DeclarativeBase
 from bot.core.config import settings
 
 
-# ssl_context = ssl.create_default_context()
-# ssl_context.check_hostname = False
-# ssl_context.verify_mode = ssl.CERT_NONE
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 # ==================== Base Classes ====================
 
