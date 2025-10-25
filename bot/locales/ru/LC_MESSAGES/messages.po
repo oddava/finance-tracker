@@ -1,0 +1,570 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-10-26 01:39+0500\n"
+"PO-Revision-Date: 2025-10-25 21:50+0500\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: bot/handlers/private/expenses.py:84
+msgid ""
+"❌ <b>Could not understand your input</b>\n"
+"\n"
+"Please try again or use /add for manual entry."
+msgstr ""
+
+#: bot/handlers/private/expenses.py:118
+msgid ""
+"❌ <b>Something went wrong</b>\n"
+"\n"
+"Please try again later."
+msgstr ""
+
+#: bot/handlers/private/expenses.py:135
+msgid ""
+"🤔 I detected multiple expenses but couldn't parse them clearly.\n"
+"\n"
+"Try separating them with commas:\n"
+"<code>10k food, 5k taxi, 20k groceries</code>"
+msgstr ""
+
+#: bot/handlers/private/expenses.py:220
+#, python-brace-format
+msgid ""
+"✅ <b>{created_count} expense(s) logged!{confidence_indicator}</b>\n"
+"\n"
+"💸 Total: -{total_amount}\n"
+"\n"
+msgstr ""
+
+#: bot/handlers/private/expenses.py:307
+msgid ""
+"⚠️ <b>No income categories found</b>\n"
+"\n"
+"Please create an income category first using /categories"
+msgstr ""
+
+#: bot/handlers/private/expenses.py:365
+msgid "Expense logged!"
+msgstr "Расходы зарегистрированы!"
+
+#: bot/handlers/private/expenses.py:383
+msgid "❌ Failed to save expense. Please try again."
+msgstr "❌ Не удалось сохранить данные о расходах. Пожалуйста, попробуйте еще раз."
+
+#: bot/handlers/private/expenses.py:405
+msgid "Income logged!"
+msgstr "Доход зарегистрирован!"
+
+#: bot/handlers/private/expenses.py:418
+msgid "❌ Failed to save income. Please try again."
+msgstr "❌ Не удалось сохранить данные о доходах. Пожалуйста, попробуйте еще раз."
+
+#: bot/handlers/private/expenses.py:453
+msgid "Please create categories first using /categories"
+msgstr "Пожалуйста, сначала создайте категории с помощью команды /categories."
+
+#: bot/handlers/private/expenses.py:462
+msgid "Expense"
+msgstr "Расходы"
+
+#: bot/handlers/private/expenses.py:462
+msgid "Income"
+msgstr "Доход"
+
+#: bot/handlers/private/expenses.py:477
+msgid "Select the correct category:"
+msgstr "Выберите правильную категорию:"
+
+#: bot/handlers/private/expenses.py:588
+msgid ""
+"🤔 <b>I couldn't understand that clearly.</b>\n"
+"\n"
+"<b>Try these formats:</b>\n"
+"• <code>50k taxi</code> - Quick expense\n"
+"• <code>lunch 25000</code> - Amount first or last\n"
+"• <code>bought groceries 120k</code> - With description\n"
+"• <code>received 5k from freelance</code> - For income\n"
+"\n"
+msgstr ""
+"🤔 <b>Я не совсем это понял.</b>\n"
+"\n"
+"<b>Попробуйте использовать следующие форматы:</b>\n"
+"• <code>50k такси</code> - Быстрая запись расхода\n"
+"• <code>обед 25000</code> - Сумма в начале или в конце\n"
+"• <code>купил продукты 120k</code> - С описанием\n"
+"• <code>получил 5k от фриланса</code> - Для учета дохода\n"
+
+#: bot/handlers/private/expenses.py:640
+msgid ""
+"❌ <b>Unexpected error occurred</b>\n"
+"\n"
+"Please try again or contact support if the issue persists."
+msgstr ""
+"❌ <b>Произошла непредвиденная ошибка</b>\n"
+"\n"
+"Пожалуйста, повторите попытку или обратитесь в службу поддержки, если "
+"проблема сохранится."
+
+#: bot/handlers/private/expenses.py:675
+msgid "⚠️ Session expired. Please try again."
+msgstr "⚠️ Срок действия сеанса истек. Пожалуйста, попробуйте еще раз."
+
+#: bot/handlers/private/expenses.py:690
+msgid "❌ Category not found"
+msgstr "❌ Категория не найдена"
+
+#: bot/handlers/private/expenses.py:709
+msgid "logged"
+msgstr "зарегистрирован"
+
+#: bot/handlers/private/expenses.py:748
+msgid "✅ Saved!"
+msgstr "✅ Сохранено!"
+
+#: bot/handlers/private/expenses.py:769
+msgid "❌ Invalid category"
+msgstr "❌ Неверная категория"
+
+#: bot/handlers/private/expenses.py:807
+msgid "📊 No expenses recorded today."
+msgstr "📊 Сегодня расходы не зафиксированы."
+
+#: bot/handlers/private/expenses.py:812
+msgid "Today's Expenses"
+msgstr "Сегодняшние расходы"
+
+#: bot/handlers/private/expenses.py:813
+msgid "Total"
+msgstr "Общий"
+
+#: bot/handlers/private/expenses.py:814
+msgid "Transactions"
+msgstr "Транзакции"
+
+#: bot/handlers/private/expenses.py:834
+msgid "Recent transactions"
+msgstr "Недавние транзакции"
+
+#: bot/handlers/private/expenses.py:854
+msgid "📊 No transactions yet. Start by logging your first expense!"
+msgstr "📊 Транзакций пока нет. Начните с регистрации вашей первой траты!"
+
+#: bot/handlers/private/expenses.py:857
+msgid "Recent Transactions"
+msgstr "Недавние транзакции"
+
+#: bot/handlers/private/settings.py:42
+#, python-brace-format
+msgid ""
+"🌍 <b>Select Language</b>\n"
+"\n"
+"Current: {language}"
+msgstr ""
+"🌍 <b>Выберите язык</b>\n"
+"\n"
+"Текущий: {language}"
+
+#: bot/handlers/private/settings.py:61
+#, fuzzy
+msgid "❌ Invalid language"
+msgstr "❌ Неверная категория"
+
+#: bot/handlers/private/settings.py:72
+#, python-brace-format
+msgid ""
+"✅ Language changed to {new_language}!\n"
+"\n"
+"You can change it anytime in /settings"
+msgstr ""
+"✅ Язык изменен на {new language}!\n\n"
+"Вы можете изменить его в любое время в разделе /settings"
+
+#: bot/handlers/private/settings.py:86
+#, python-brace-format
+msgid ""
+"🌍 <b>Select Language\n"
+"\n"
+"Current: {language}"
+msgstr ""
+"🌍 <b>Выберите язык\n"
+"\n"
+"Текущий: {language}"
+
+#: bot/handlers/private/settings.py:106
+#, python-brace-format
+msgid ""
+"⚙️ <b>Settings</b>\n"
+"\n"
+"Current configuration:\n"
+"🌍 Language: {language}\n"
+"💱 Currency: {currency}\n"
+"🕐 Timezone: {timezone}\n"
+"\n"
+"What would you like to change?"
+msgstr ""
+"⚙️ <b>Настройки</b>\n"
+"\n"
+"Текущая конфигурация:\n"
+"🌍 Язык: {language}\n"
+"💱 Валюта: {currency}\n"
+"🕐 Часовой пояс: {timezone}\n"
+"\n"
+"Что бы вы хотели изменить?"
+
+#: bot/handlers/private/settings.py:152
+#, python-brace-format
+msgid ""
+"🕐 <b>Select Timezone</b>\n"
+"\n"
+"Current: {timezone}\n"
+"Local time: {time}\n"
+"UTC offset: {offset}\n"
+"\n"
+"Choose a timezone region:"
+msgstr ""
+"🕐 <b>Выберите часовой пояс</b>\n"
+"\n"
+"Текущий: {timezone}\n"
+"Местное время: {time}\n"
+"Смещение относительно UTC: {offset}\n"
+"\n"
+"Выберите регион часового пояса:"
+
+#: bot/handlers/private/settings.py:179
+#, python-brace-format
+msgid ""
+"🕐 <b>Select Timezone - {region}</b>\n"
+"\n"
+"Current: {timezone}\n"
+"\n"
+"Choose your city:"
+msgstr ""
+"🕐 <b>Выберите часовой пояс - {region}</b>\n"
+"\n"
+"Текущий: {timezone}\n"
+"\n"
+"Выберите свой город:"
+
+#: bot/handlers/private/settings.py:218
+#, python-brace-format
+msgid ""
+"✅ Timezone changed to {timezone}!\n"
+"\n"
+"🕐 Local time: {time}\n"
+"📍 UTC offset: {offset}\n"
+"\n"
+"All timestamps will now use this timezone."
+msgstr ""
+"✅ Часовой пояс изменен на {timezone}!\n"
+"\n"
+"🕐 Местное время: {time}\n"
+"📍 Смещение относительно UTC: {offset}\n"
+"\n"
+"Теперь все отметки времени будут использовать этот часовой пояс."
+
+#: bot/handlers/private/settings.py:244
+#, python-brace-format
+msgid ""
+"🕐 <b>Select Timezone</b>\n"
+"\n"
+"Current: {timezone}\n"
+"Local time: {time}"
+msgstr ""
+"🕐 <b>Выберите часовой пояс</b>\n"
+"\n"
+"Текущий: {timezone}\n"
+"Местное время: {time}"
+
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#: bot/handlers/private/start.py:40
+msgid ""
+"What would you like to do?\n"
+"\n"
+"<b>Quick Commands:</b>\n"
+"• Just type: <code>50k taxi</code>\n"
+"• /today - Today's summary\n"
+"• /recent - Recent transactions\n"
+"• /help - About this bot"
+msgstr ""
+"Что бы вы хотели сделать?\n"
+"\n"
+"<b>Быстрые команды:</b>\n"
+"• Просто введите: <code>50k такси</code>\n"
+"• /today - Сводка за сегодня\n"
+"• /recent - Последние транзакции\n"
+"• /help - О боте"
+
+#: bot/handlers/private/start.py:51
+msgid ""
+"Welcome!\n"
+"💱 <b>First, let's set your currency:</b>\n"
+"\n"
+"Select your preferred currency:"
+msgstr ""
+"Добро пожаловать!\n"
+"💱 <b>Сначала выберите валюту:</b>\n"
+"\n"
+"Выберите предпочитаемую валюту:"
+
+#: bot/handlers/private/start.py:70
+msgid ""
+"Perfect! You're all set up.\n"
+"\n"
+"<b>Try your first expense:</b>\n"
+"• Example: <code>50k taxi</code>\n"
+"Let's get started! 🚀"
+msgstr ""
+"Отлично! Настройка завершена.\n"
+"\n"
+"<b>Попробуйте записать первый расход:</b>\n"
+"• Пример: <code>50k такси</code>\n"
+"Начнем! 🚀"
+
+#: bot/handlers/private/start.py:85
+msgid ""
+"❓ <b>How to use the bot</b>\n"
+"\n"
+"<b>📝 Logging Expenses:</b>\n"
+"• Example: <code>50k taxi</code>\n"
+"• Example: <code>lunch 25000</code>\n"
+"• Example: <code>spent 150 on groceries</code>\n"
+"<b>📊 View Reports:</b>\n"
+"• /today - Today's expenses\n"
+"• /week [soon] - This week's summary\n"
+"• /month [soon] - Monthly breakdown\n"
+"• /recent - Last 10 transactions\n"
+"\n"
+"<b>🎯 Budgets [soon]:</b>\n"
+"• /budget - Set/view budgets\n"
+"• /budgets - All budgets status\n"
+"\n"
+"<b>⚙️ Settings [soon]:</b>\n"
+"• /settings - Change preferences\n"
+"• /currency - Change currency\n"
+"• /categories - Manage categories\n"
+"\n"
+"<b>📈 Analytics [soon]:</b>\n"
+"• /insights - AI-powered insights\n"
+"• /compare - Compare periods\n"
+"• /export - Export data to Excel\n"
+"\n"
+"<b>📚 Other:</b>\n"
+"• /about - About the bot\n"
+"• /feedback - Report issues\n"
+"\n"
+msgstr ""
+"❓ <b>Как использовать бот</b>\n"
+"\n"
+"<b>📝 Учет расходов:</b>\n"
+"• Пример: <code>50k такси</code>\n"
+"• Пример: <code>обед 25000</code>\n"
+"• Пример: <code>потрачено 150 на продукты</code>\n"
+"<b>📊 Просмотр отчетов:</b>\n"
+"• /today - Расходы за сегодня\n"
+"• /week [скоро] - Сводка за неделю\n"
+"• /month [скоро] - Месячная разбивка\n"
+"• /recent - Последние 10 транзакций\n"
+"\n"
+"<b>🎯 Бюджеты [скоро]:</b>\n"
+"• /budget - Установить/просмотреть бюджеты\n"
+"• /budgets - Статус всех бюджетов\n"
+"\n"
+"<b>⚙️ Настройки [скоро]:</b>\n"
+"• /settings - Изменить настройки\n"
+"• /currency - Сменить валюту\n"
+"• /categories - Управление категориями\n"
+"\n"
+"<b>📈 Аналитика [скоро]:</b>\n"
+"• /insights - Аналитика с ИИ\n"
+"• /compare - Сравнение периодов\n"
+"• /export - Экспорт данных в Excel\n"
+"\n"
+"<b>📚 Другое:</b>\n"
+"• /about - О боте\n"
+"• /feedback - Сообщить о проблемах\n"
+"\n"
+
+#: bot/handlers/private/start.py:137
+#, python-brace-format
+msgid ""
+"ℹ️ <b>About Finance Tracker Bot</b>\n"
+"\n"
+"🤖 Smart personal finance tracking made easy!\n"
+"\n"
+"<b>Your Stats:</b>\n"
+"📅 Member since: {joined_date}\n"
+"💰 Currency: {currency}\n"
+"📝 This month: {monthly_transactions} transactions\n"
+"💸 Total spent: {total_spent} {currency}\n"
+"\n"
+"<b>Features:</b>\n"
+"✅ Natural language expense logging\n"
+"✅ Budget tracking & alerts\n"
+"✅ Smart insights & analytics\n"
+"✅ Visual reports & charts\n"
+"✅ Multiple currencies support\n"
+"✅ Data export (Excel/CSV)\n"
+"\n"
+"Made with ❤️\n"
+"Version: 1.0.0"
+msgstr ""
+"ℹ️ <b>О боте Finance Tracker</b>\n"
+"\n"
+"🤖 Умный учет личных финансов стал проще!\n"
+"\n"
+"<b>Ваша статистика:</b>\n"
+"📅 Участник с: {joined_date}\n"
+"💰 Валюта: {currency}\n"
+"📝 В этом месяце: {monthly_transactions} транзакций\n"
+"💸 Всего потрачено: {total_spent} {currency}\n"
+"\n"
+"<b>Функции:</b>\n"
+"✅ Учет расходов на естественном языке\n"
+"☑️ Отслеживание бюджета и уведомления\n"
+"☑️ Умная аналитика и инсайты\n"
+"☑️ Визуальные отчеты и графики\n"
+"☑️ Поддержка нескольких валют\n"
+"☑️ Экспорт данных (Excel/CSV)\n"
+"\n"
+"Сделано с ❤️\n"
+"Версия: 1.0.0"
+
+#: bot/handlers/private/start.py:167
+msgid ""
+"💬 <b>Feedback & Support</b>\n"
+"\n"
+"We'd love to hear from you!\n"
+"\n"
+"📧 <b>Contact:</b>\n"
+"• Telegram: @notJony\n"
+"\n"
+"🐛 <b>Report Issues:</b>\n"
+"Found a bug? Let us know!\n"
+"\n"
+"⭐ <b>Feature Requests:</b>\n"
+"Have an idea? We're listening!\n"
+"\n"
+"🌟 <b>Rate Us:</b>\n"
+"Enjoying the bot? Share with friends!"
+msgstr ""
+"💬 <b>Обратная связь и поддержка</b>\n"
+"\n"
+"Мы будем рады вашим отзывам!\n"
+"\n"
+"📧 <b>Контакты:</b>\n"
+"• Telegram: @notJony\n"
+"\n"
+"🐛 <b>Сообщить о проблемах:</b>\n"
+"Нашли ошибку? Дайте нам знать!\n"
+"\n"
+"⭐ <b>Предложения по функциям:</b>\n"
+"Есть идея? Мы слушаем!\n"
+"\n"
+"🌟 <b>Оцените нас:</b>\n"
+"Нравится бот? Поделитесь с друзьями!"
+
+#: bot/keyboards/inline.py:89
+msgid "🌍 Language"
+msgstr "🌍 Язык"
+
+#: bot/keyboards/inline.py:90
+msgid "💱 Currency"
+msgstr "💱 Валюта"
+
+#: bot/keyboards/inline.py:93
+msgid "🏷️ Categories"
+msgstr "🏷️ Категории"
+
+#: bot/keyboards/inline.py:94
+msgid "🎯 Budgets"
+msgstr "🎯 Бюджеты"
+
+#: bot/keyboards/inline.py:97
+msgid "🔔 Notifications"
+msgstr "🔔 Уведомления"
+
+#: bot/keyboards/inline.py:98
+msgid "🕐 Timezone"
+msgstr "🕐 Часовой пояс"
+
+#: bot/keyboards/inline.py:101
+msgid "📥 Export Data"
+msgstr "📥 Экспорт данных"
+
+#: bot/keyboards/inline.py:102
+msgid "🗑️ Delete Account"
+msgstr "🗑️ Удалить аккаунт"
+
+#: bot/keyboards/inline.py:105
+msgid "❌ Close"
+msgstr "❌ Закрыть"
+
+#: bot/utils/text.py:7
+#, python-brace-format
+msgid ""
+"✅ Successfully sent broadcast message to <b>{user_count}</b> users. \n"
+"\n"
+"Failed: {failed_count}\n"
+"Blocked: {blocked_count}"
+msgstr ""
+"✅ Сообщение успешно отправлено <b>{user_count}</b> пользователям.\n"
+"\n"
+"Не удалось: {failed_count}\n"
+"Заблокировано: {blocked_count}"
+
+#: bot/utils/text.py:12
+#, python-brace-format
+msgid ""
+"📢 <b>Confirm Broadcast</b>\n"
+"\n"
+"<b>Recipients:</b> {total_users:,} users\n"
+"\n"
+"<b>Message:</b>\n"
+"{text}\n"
+"\n"
+"Send this message to all users?"
+msgstr ""
+"📢 <b>Подтверждение рассылки</b>\n"
+"\n"
+"<b>Получатели:</b> {total_users:,} пользователей\n"
+"\n"
+"<b>Сообщение:</b>\n"
+"{text}\n"
+"\n"
+"Отправить это сообщение всем пользователям?"
+
+#: bot/utils/text.py:19
+msgid ""
+"📢 <b>Broadcast Message</b>\n"
+"\n"
+"To send a broadcast message to all users:\n"
+"\n"
+"Use command: <code>/broadcast your message here</code>\n"
+"\n"
+"⚠️ <b>Warning:</b> This will send the message to ALL users!"
+msgstr ""
+"📢 <b>Сообщение для рассылки</b>\n"
+"\n"
+"Чтобы отправить сообщение всем пользователям:\n"
+"\n"
+"Используйте команду: <code>/broadcast ваше сообщение здесь</code>\n"
+"\n"
+"⚠️ <b>Предупреждение:</b> Это отправит сообщение ВСЕМ пользователям!"
+
