@@ -68,9 +68,10 @@ async def language_selected(callback: CallbackQuery, session: AsyncSession):
         language_code=language_code
     )
 
+    new_language_text = get_language_name(language_code)
     await callback.message.edit_text(
         _("✅ Language changed to {new_language}!\n\n"
-          "You can change it anytime in /settings").format(new_language=get_language_name(language_code)),
+          "You can change it anytime in /settings").format(new_language=new_language_text),
         parse_mode="HTML"
     )
 
@@ -300,3 +301,10 @@ async def settings_export(callback: CallbackQuery):
 async def settings_delete(callback: CallbackQuery):
     """Delete account (placeholder)"""
     await callback.answer("🗑️ Account deletion coming soon!", show_alert=True)
+
+
+@admin_router.callback_query(F.data == "settings_close")
+async def settings_close(callback: CallbackQuery):
+    """Close settings"""
+    await callback.message.delete()
+    await callback.answer()

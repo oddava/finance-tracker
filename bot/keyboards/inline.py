@@ -1,6 +1,8 @@
 import pytz
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.i18n import gettext as _
+from loguru import logger
 
 from bot.utils.helpers import format_timezone
 
@@ -21,7 +23,7 @@ def get_category_keyboard(categories) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     if not categories:
-        print("⚠️ No categories passed to keyboard builder!")
+        logger.warning("⚠️ No categories passed to keyboard builder!")
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Other", callback_data="cat_9")],
             [InlineKeyboardButton(text="Cancel", callback_data="cancel")],
@@ -84,21 +86,24 @@ def get_settings_keyboard() -> InlineKeyboardMarkup:
     """Create settings menu keyboard"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🌍 Language", callback_data="settings_language"),
-            InlineKeyboardButton(text="💱 Currency", callback_data="settings_currency")
+            InlineKeyboardButton(text=_("🌍 Language"), callback_data="settings_language"),
+            InlineKeyboardButton(text=_("💱 Currency"), callback_data="settings_currency")
         ],
         [
-            InlineKeyboardButton(text="🏷️ Categories", callback_data="settings_categories"),
-            InlineKeyboardButton(text="🎯 Budgets", callback_data="settings_budgets")
+            InlineKeyboardButton(text=_("🏷️ Categories"), callback_data="settings_categories"),
+            InlineKeyboardButton(text=_("🎯 Budgets"), callback_data="settings_budgets")
         ],
         [
-            InlineKeyboardButton(text="🔔 Notifications", callback_data="settings_notifications"),
-            InlineKeyboardButton(text="🕐 Timezone", callback_data="settings_timezone")
+            InlineKeyboardButton(text=_("🔔 Notifications"), callback_data="settings_notifications"),
+            InlineKeyboardButton(text=_("🕐 Timezone"), callback_data="settings_timezone")
         ],
         [
-            InlineKeyboardButton(text="📥 Export Data", callback_data="settings_export"),
-            InlineKeyboardButton(text="🗑️ Delete Account", callback_data="settings_delete")
+            InlineKeyboardButton(text=_("📥 Export Data"), callback_data="settings_export"),
+            InlineKeyboardButton(text=_("🗑️ Delete Account"), callback_data="settings_delete")
         ],
+        [
+            InlineKeyboardButton(text=_("❌ Close"), callback_data="settings_close")
+        ]
     ])
     return keyboard
 
