@@ -487,9 +487,8 @@ msgstr ""
 "Bot sizga yoqdimi? Do'stlaringiz bilan ulashing!"
 
 #: bot/keyboards/inline.py:89
-#, fuzzy
 msgid "🌍 Language"
-msgstr "❌ Noto'g'ri kategoriya"
+msgstr "🌍 Til"
 
 #: bot/keyboards/inline.py:90
 msgid "💱 Currency"
