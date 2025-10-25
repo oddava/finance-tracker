@@ -67,12 +67,15 @@ async def on_startup_webhook():
     await setup_bot()
     setup_sentry()
 
-    await bot.set_webhook(
-        url=f"{WEBHOOK_URL}{WEBHOOK_PATH}",
-        allowed_updates=dp.resolve_used_update_types(),
-        drop_pending_updates=True,
-        secret_token=WEBHOOK_SECRET,
-    )
+    try:
+        await bot.set_webhook(
+            url=f"{WEBHOOK_URL}{WEBHOOK_PATH}",
+            allowed_updates=dp.resolve_used_update_types(),
+            drop_pending_updates=True,
+            secret_token=WEBHOOK_SECRET,
+        )
+    except Exception as e:
+        logger.error(f"Failed to webhook: {e}")
     logger.success("✅ Bot started in WEBHOOK mode!")
 
 
