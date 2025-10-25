@@ -9,17 +9,19 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, BufferedInputFile, InlineKeyboardButton, InlineKeyboardMarkup
 from loguru import logger
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.core.config import settings
 from bot.database import BotSetting, Transaction, Budget, Category, User
+from bot.database.engine import db
 from bot.filters.admin_filter import AdminFilter
 from bot.services.admin_service import BroadcastService
 from bot.utils.helpers import get_total_users, get_new_users_today, get_active_users_today, get_active_users_week, \
     get_transactions_count_today, get_transactions_count_total, get_total_transaction_volume, get_user_retention_stats, \
     get_top_users_by_transactions, get_popular_categories, get_database_size
+from bot.utils.perf import measure
 
 admin_router = Router()
 
@@ -494,3 +496,12 @@ async def export_users(message: Message, session: AsyncSession):
         file,
         caption=f"📊 Exported {len(users)} users"
     )
+
+
+# Database Check
+@admin_router.message(Command("pingdb"), AdminFilter())
+async def cmd_ping_db(msg: Message):
+    async with measure("ping_db"):
+        async with db.session() as session:
+            await session.execute(text("SELECT 1"))
+    await msg.answer("Database check done ✅")

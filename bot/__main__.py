@@ -123,8 +123,9 @@ async def webhook(
     return {"ok": True}
 
 bot_start_time = datetime.now()
-@app.get("/health")
-@app.head("/health")
+# @app.get("/health")
+# @app.head("/health")
+@app.api_route("/health")
 async def health_check():
     """Health check for monitoring"""
     uptime = (datetime.now() - bot_start_time).total_seconds()
@@ -148,7 +149,6 @@ async def health_check():
 @app.get("/metrics")
 async def metrics():
     """Basic metrics endpoint"""
-    # Add your metrics here
     return {
         "total_users": await get_total_users(),
         "transactions_today": await get_transactions_count_today(),

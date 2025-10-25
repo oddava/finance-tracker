@@ -5,7 +5,6 @@ import random
 from datetime import datetime
 
 from aiogram import Router, F
-from aiogram.fsm.state import StatesGroup
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,38 +15,41 @@ from bot.utils.helpers import get_monthly_summary, create_default_categories
 
 from loguru import logger
 
+from bot.utils.perf import measure
 from bot.utils.text import get_help_text, get_about_text, get_menu_text, get_feedback_text
 
 start_router = Router()
 
 @start_router.message(CommandStart())
 async def cmd_start(message: Message, session: AsyncSession) -> None:
-    """Handle /start command - welcome new users"""
-    logger.info(f"User {message.from_user.id} has started the bot.")
+    async with measure("start_handler"):
+        """Handle /start command - welcome new users"""
+        logger.info(f"User {message.from_user.id} has started the bot.")
 
-    user_data = message.from_user.model_dump(include={'first_name', 'language_code', 'username'})
-    user, created = await User.get_or_create(
-        user_id=message.from_user.id,
-        defaults=dict(user_data)
-    )
+        user_data = message.from_user.model_dump(include={'first_name', 'language_code', 'username'})
+        async with measure("get_user_data"):
+            user, created = await User.get_or_create(
+                user_id=message.from_user.id,
+                defaults=dict(user_data)
+            )
 
-    if not created:
-        menu_text = get_menu_text()
+        if not created:
+            menu_text = get_menu_text()
+            await message.answer(
+                text=menu_text,
+                parse_mode="HTML"
+            )
+            return
+
+        await message.answer("Welcome!", parse_mode="HTML")
+
         await message.answer(
-            text=menu_text,
+            "💱 <b>First, let's set your currency:</b>\n\n"
+            "Select your preferred currency:",
+            reply_markup=currency_choice_ikm(),
             parse_mode="HTML"
         )
-        return
-
-    await message.answer("Welcome!", parse_mode="HTML")
-
-    await message.answer(
-        "💱 <b>First, let's set your currency:</b>\n\n"
-        "Select your preferred currency:",
-        reply_markup=currency_choice_ikm(),
-        parse_mode="HTML"
-    )
-    await create_default_categories(session, message.from_user.id)
+        await create_default_categories(session, message.from_user.id)
 
 
 @start_router.callback_query(F.data.startswith("currency_set_"))
