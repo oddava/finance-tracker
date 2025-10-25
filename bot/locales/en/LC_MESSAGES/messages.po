@@ -174,6 +174,9 @@ msgid ""
 "\n"
 "You can change it anytime in /settings"
 msgstr ""
+"✅ Language changed to {new_language}!\n"
+"\n"
+"You can change it anytime in /settings"
 
 #: bot/handlers/private/settings.py:86
 #, python-brace-format

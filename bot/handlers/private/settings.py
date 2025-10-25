@@ -70,6 +70,7 @@ async def language_selected(callback: CallbackQuery, session: AsyncSession):
     )
 
     new_language_text = get_language_name(language_code)
+
     await callback.message.edit_text(
         _("✅ Language changed to {new_language}!\n\n"
           "You can change it anytime in /settings").format(new_language=new_language_text),

@@ -186,11 +186,11 @@ msgstr "❌ Неверная категория"
 #: bot/handlers/private/settings.py:72
 #, python-brace-format
 msgid ""
-"✅ Language changed to {new_language}!\n"
+"✅ Language changed to {new_language} !\n"
 "\n"
 "You can change it anytime in /settings"
 msgstr ""
-"✅ Язык изменен на {new language}!\n\n"
+"✅ Язык изменен на {new_language} !\n\n"
 "Вы можете изменить его в любое время в разделе /settings"
 
 #: bot/handlers/private/settings.py:86
