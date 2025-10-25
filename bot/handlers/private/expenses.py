@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
@@ -11,7 +9,8 @@ from bot.services.category_service import CategoryService
 from bot.services.expense_parser import ExpenseParser
 from bot.services.transaction_service import TransactionService
 from bot.utils.formatters import format_amount
-from bot.utils.helpers import get_transactions_by_period, get_recent_transactions, get_transactions_today
+from bot.utils.helpers import get_recent_transactions, get_transactions_today, to_user_timezone
+from aiogram.utils.i18n import gettext as _
 
 expense_router = Router()
 expense_parser = ExpenseParser()
@@ -82,8 +81,8 @@ class ExpenseHandler:
             except Exception as e:
                 logger.exception(f"Parsing failed for input '{text}': {e}")
                 await self.message.answer(
-                    "❌ <b>Could not understand your input</b>\n\n"
-                    "Please try again or use /add for manual entry.",
+                    _("❌ <b>Could not understand your input</b>\n\n"
+                      "Please try again or use /add for manual entry."),
                     parse_mode="HTML"
                 )
                 return True
@@ -116,8 +115,8 @@ class ExpenseHandler:
         except Exception as e:
             logger.exception(f"Error processing natural input: {e}")
             await self.message.answer(
-                "❌ <b>Something went wrong</b>\n\n"
-                "Please try again later.",
+                _("❌ <b>Something went wrong</b>\n\n"
+                  "Please try again later."),
                 parse_mode="HTML"
             )
             return True
@@ -133,9 +132,9 @@ class ExpenseHandler:
 
         if not transactions:
             await self.message.answer(
-                "🤔 I detected multiple expenses but couldn't parse them clearly.\n\n"
-                "Try separating them with commas:\n"
-                "<code>10k food, 5k taxi, 20k groceries</code>",
+                _("🤔 I detected multiple expenses but couldn't parse them clearly.\n\n"
+                  "Try separating them with commas:\n"
+                  "<code>10k food, 5k taxi, 20k groceries</code>"),
                 parse_mode="HTML"
             )
             return
@@ -218,8 +217,10 @@ class ExpenseHandler:
         if created_count > 0:
             confidence_indicator = " ✨" if len(auto_create) == len(transactions) else ""
             response += (
-                f"✅ <b>{created_count} expense(s) logged!{confidence_indicator}</b>\n\n"
-                f"💸 Total: -{format_amount(total_amount, self.user.currency)}\n\n"
+                _("✅ <b>{created_count} expense(s) logged!{confidence_indicator}</b>\n\n"
+                  "💸 Total: -{total_amount}\n\n").format(created_count=created_count,
+                                                         confidence_indicator=confidence_indicator,
+                                                         total_amount=format_amount(total_amount, self.user.currency))
             )
 
             # List created transactions
@@ -303,8 +304,8 @@ class ExpenseHandler:
 
         if not income_categories:
             await self.message.answer(
-                "⚠️ <b>No income categories found</b>\n\n"
-                "Please create an income category first using /categories",
+                _("⚠️ <b>No income categories found</b>\n\n"
+                  "Please create an income category first using /categories"),
                 parse_mode="HTML"
             )
             return
@@ -361,7 +362,7 @@ class ExpenseHandler:
             # Format base response
             confidence_indicator = self._get_confidence_indicator(confidence)
             response = (
-                f"✅ <b>Expense logged!{confidence_indicator}</b>\n\n"
+                f"✅ <b>{_('Expense logged!')}{confidence_indicator}</b>\n\n"
                 f"💸 -{format_amount(amount, self.user.currency)}\n"
                 f"📁 {category.name}\n"
             )
@@ -379,7 +380,7 @@ class ExpenseHandler:
         except Exception as e:
             logger.exception(f"Error creating expense transaction: {e}")
             await self.message.answer(
-                "❌ Failed to save expense. Please try again.",
+                _("❌ Failed to save expense. Please try again."),
                 parse_mode="HTML"
             )
 
@@ -401,7 +402,7 @@ class ExpenseHandler:
             )
 
             response = (
-                f"✅ <b>Income logged!</b>\n\n"
+                f"✅ <b>{_('Income logged!')}</b>\n\n"
                 f"💰 +{format_amount(amount, self.user.currency)}\n"
                 f"📁 {category.name}\n"
             )
@@ -414,7 +415,7 @@ class ExpenseHandler:
         except Exception as e:
             logger.exception(f"Error creating income transaction: {e}")
             await self.message.answer(
-                "❌ Failed to save income. Please try again.",
+                _("❌ Failed to save income. Please try again."),
                 parse_mode="HTML"
             )
 
@@ -449,8 +450,8 @@ class ExpenseHandler:
 
         if not categories:
             await self.message.answer(
-                f"⚠️ <b>No {type} categories found</b>\n\n"
-                f"Please create categories first using /categories",
+                _(f"⚠️ <b>No {type} categories found</b>\n\n"
+                  f"Please create categories first using /categories"),
                 parse_mode="HTML"
             )
             await self.state.clear()
@@ -458,7 +459,7 @@ class ExpenseHandler:
 
         # Build message
         emoji = "💸" if type == "expense" else "💰"
-        action = "Expense" if type == "expense" else "Income"
+        action = _('Expense') if type == "expense" else _("Income")
 
         message_text = (
             f"{emoji} <b>{action}: {format_amount(amount, self.user.currency)}</b>\n\n"
@@ -473,7 +474,7 @@ class ExpenseHandler:
         if remaining_transactions:
             message_text += f"📊 {len(remaining_transactions) + 1} expenses need review\n\n"
 
-        message_text += "Select the correct category:"
+        message_text += _("Select the correct category:")
 
         # Show category keyboard
         keyboard = get_category_keyboard(categories)
@@ -584,13 +585,12 @@ class ExpenseHandler:
     async def _send_help_message(self, parse_result: Dict[str, Any]):
         """Send helpful message for unclear input"""
         await self.message.answer(
-            "🤔 <b>I couldn't understand that clearly.</b>\n\n"
-            "<b>Try these formats:</b>\n"
-            "• <code>50k taxi</code> - Quick expense\n"
-            "• <code>lunch 25000</code> - Amount first or last\n"
-            "• <code>bought groceries 120k</code> - With description\n"
-            "• <code>received 5k from freelance</code> - For income\n\n"
-            "Or use /add for step-by-step entry.",
+            _("🤔 <b>I couldn't understand that clearly.</b>\n\n"
+              "<b>Try these formats:</b>\n"
+              "• <code>50k taxi</code> - Quick expense\n"
+              "• <code>lunch 25000</code> - Amount first or last\n"
+              "• <code>bought groceries 120k</code> - With description\n"
+              "• <code>received 5k from freelance</code> - For income\n\n"),
             parse_mode="HTML"
         )
 
@@ -626,7 +626,7 @@ async def handle_natural_expense(
 
     try:
         # Get or create user
-        user, _ = await User.get_or_create(
+        user, status = await User.get_or_create(
             user_id=message.from_user.id,
         )
 
@@ -637,8 +637,7 @@ async def handle_natural_expense(
     except Exception as e:
         logger.exception(f"Critical error in natural expense handler: {e}")
         await message.answer(
-            "❌ <b>Unexpected error occurred</b>\n\n"
-            "Please try again or contact support if the issue persists.",
+            _("❌ <b>Unexpected error occurred</b>\n\nPlease try again or contact support if the issue persists."),
             parse_mode="HTML"
         )
 
@@ -668,16 +667,17 @@ async def category_selected(
         amount = data.get('amount')
         description = data.get('description', '')
         transaction_type = data.get('transaction_type', 'expense')
-        remaining_transactions = data.get('remaining_transactions', [])  # CHANGE #10
+        remaining_transactions = data.get('remaining_transactions', [])
+
 
         # Validate data
         if not amount:
-            await callback.answer("⚠️ Session expired. Please try again.", show_alert=True)
+            await callback.answer(_("⚠️ Session expired. Please try again."), show_alert=True)
             await state.clear()
             return
 
         # Get user
-        user, _ = await User.get_or_create(
+        user, status = await User.get_or_create(
             user_id=callback.from_user.id,
             username=callback.from_user.username,
             first_name=callback.from_user.first_name
@@ -687,7 +687,7 @@ async def category_selected(
         category: Category = await Category.filter_first(criteria=Category.id == category_id)
 
         if not category or category.user_id != user.user_id:
-            await callback.answer("❌ Category not found", show_alert=True)
+            await callback.answer(_("❌ Category not found"), show_alert=True)
             return
 
         # Create transaction
@@ -706,7 +706,7 @@ async def category_selected(
         sign = "-" if transaction_type == "expense" else "+"
 
         response = (
-            f"✅ <b>{transaction_type.title()} logged!</b>\n\n"
+            f"✅ <b>{transaction_type.title()} {_('logged')}!</b>\n\n"
             f"{emoji} {sign}{format_amount(amount, user.currency)}\n"
             f"📁 {category.name}\n"
         )
@@ -745,7 +745,7 @@ async def category_selected(
                     )
 
         await callback.message.edit_text(response, parse_mode="HTML")
-        await callback.answer("✅ Saved!")
+        await callback.answer(_("✅ Saved!"))
 
         if remaining_transactions:
             next_txn = remaining_transactions[0]
@@ -766,7 +766,7 @@ async def category_selected(
             await state.clear()
 
     except ValueError:
-        await callback.answer("❌ Invalid category", show_alert=True)
+        await callback.answer(_("❌ Invalid category"), show_alert=True)
     except Exception as e:
         logger.exception(f"Error in category selection: {e}")
         await callback.answer(
@@ -804,14 +804,14 @@ async def cmd_today(message: Message, session: AsyncSession):
     transactions = await get_transactions_today(user_id=user.user_id)
 
     if not transactions:
-        await message.answer("📊 No expenses recorded today.")
+        await message.answer(_("📊 No expenses recorded today."))
         return
 
     total = sum(t.amount for t in transactions)
 
-    response = f"📊 <b>Today's Expenses</b>\n\n"
-    response += f"💸 Total: {format_amount(total, user.currency)}\n"
-    response += f"📝 Transactions: {len(transactions)}\n\n"
+    response = f"📊 <b>{_('Today\'s Expenses')}</b>\n\n"
+    response += f"💸 {_('Total')}: {format_amount(total, user.currency)}\n"
+    response += f"📝 {_('Transactions')}: {len(transactions)}\n\n"
 
     # Group by category
     by_category = {}
@@ -831,7 +831,7 @@ async def cmd_today(message: Message, session: AsyncSession):
         percentage = (data['amount'] / total * 100) if total > 0 else 0
         response += f"{data['emoji']} {cat_name}: {format_amount(data['amount'], user.currency)} ({percentage:.0f}%)\n"
 
-    response += "\n<b>Recent transactions:</b>\n"
+    response += f"\n<b>{_('Recent transactions')}:</b>\n"
     for t in transactions[-5:]:
         response += f"• {t.category.icon_emoji} {format_amount(t.amount, user.currency)}"
         if t.description:
@@ -846,19 +846,19 @@ async def cmd_today(message: Message, session: AsyncSession):
 @expense_router.message(Command("recent"))
 async def cmd_recent(message: Message, session: AsyncSession):
     """Show recent transactions"""
-    user = await User.get_or_create(user_id=message.from_user.id, username=message.from_user.username)
-    user = user[0]
+    user = await User.get(id_=message.from_user.id)
 
     transactions = await get_recent_transactions(session, user.user_id, limit=10)
 
     if not transactions:
-        await message.answer("📊 No transactions yet. Start by logging your first expense!")
+        await message.answer(_("📊 No transactions yet. Start by logging your first expense!"))
         return
 
-    response = "📋 <b>Recent Transactions</b>\n\n"
+    response = f"📋 <b>{_('Recent Transactions')}</b>\n\n"
 
     for t in transactions:
-        date_str = t.date.strftime("%d %b, %H:%M")
+        local_time = to_user_timezone(t.date, user.timezone)
+        date_str = local_time.strftime("%d %b, %H:%M")
         type_emoji = "💸" if t.type == "expense" else "💰"
 
         response += f"{type_emoji} {t.category.icon_emoji} <b>{format_amount(t.amount, user.currency)}</b>\n"

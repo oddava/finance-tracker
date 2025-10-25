@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from typing import Optional, Sequence, List, Dict, Any, Coroutine
 
-from aiogram.types import KeyboardButton
+import pytz
+from aiogram.types import KeyboardButton, Message
 from asyncpg.pgproto.pgproto import timedelta
 from slugify import slugify
 from sqlalchemy import select, func, desc, extract
@@ -10,6 +11,8 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.operators import and_
 
 from bot.database import Category, Transaction, Budget, User
+
+from aiogram.utils.i18n import gettext as _
 
 
 async def create_default_categories(session: AsyncSession, user_id: int):
@@ -674,3 +677,41 @@ async def get_database_size(session: AsyncSession) -> Optional[str]:
         return result.scalar()
     except Exception:
         return None
+
+
+def get_language_name(code: str) -> str:
+    """Get language display name"""
+    languages = {
+        'en': '🇬🇧 English',
+        'uz': '🇺🇿 O\'zbekcha',
+        'ru': '🇷🇺 Русский'
+    }
+    return languages.get(code, languages['en'])
+
+
+
+def format_timezone(tz_name: str) -> str:
+    """
+    Format timezone like 'Asia/Tashkent' -> 'Tashkent (UTC+05:00)'
+    """
+    if not tz_name:
+        return "Unknown"
+
+    try:
+        tz = pytz.timezone(tz_name)
+        offset = datetime.now(tz).strftime("%z")
+        offset = f"{offset[:3]}:{offset[3:]}" if offset else "+00:00"
+        city = tz_name.split("/")[-1].replace("_", " ")
+        return f"{city} (UTC{offset})"
+    except Exception:
+        return tz_name
+
+def to_user_timezone(dt: datetime, user_timezone: str) -> datetime:
+    """Convert a UTC datetime to the user's local timezone"""
+    if dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    try:
+        tz = pytz.timezone(user_timezone)
+    except Exception:
+        tz = pytz.utc
+    return dt.astimezone(tz)

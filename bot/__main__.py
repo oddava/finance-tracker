@@ -1,9 +1,10 @@
-import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 import uvicorn
 import uvloop
+from aiogram.utils.i18n import I18n
 from fastapi import FastAPI, Request, Header, HTTPException
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -100,6 +101,7 @@ async def lifespan(app: FastAPI):
     yield
     await on_shutdown()
 app = FastAPI(lifespan=lifespan)
+
 
 
 @app.post(WEBHOOK_PATH)

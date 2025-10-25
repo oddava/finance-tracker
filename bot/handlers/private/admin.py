@@ -22,6 +22,7 @@ from bot.utils.helpers import get_total_users, get_new_users_today, get_active_u
     get_transactions_count_today, get_transactions_count_total, get_total_transaction_volume, get_user_retention_stats, \
     get_top_users_by_transactions, get_popular_categories, get_database_size
 from bot.utils.perf import measure
+from bot.utils.text import get_broadcast_sent_text, get_confirm_broadcast_text, get_broadcast_message
 
 admin_router = Router()
 
@@ -112,10 +113,7 @@ async def show_broadcast_info(callback: CallbackQuery):
     await callback.answer()
 
     response = (
-        "📢 <b>Broadcast Message</b>\n\n"
-        "To send a broadcast message to all users:\n\n"
-        "Use command: <code>/broadcast your message here</code>\n\n"
-        "⚠️ <b>Warning:</b> This will send the message to ALL users!"
+        get_broadcast_message()
     )
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -152,10 +150,7 @@ async def broadcast_message(message: Message, session: AsyncSession, state: FSMC
     total_users = await get_total_users(session)
 
     await message.answer(
-        f"📢 <b>Confirm Broadcast</b>\n\n"
-        f"<b>Recipients:</b> {total_users:,} users\n\n"
-        f"<b>Message:</b>\n{text}\n\n"
-        f"Send this message to all users?",
+        get_confirm_broadcast_text(total_users, text),
         reply_markup=keyboard,
         parse_mode="HTML"
     )
@@ -166,7 +161,14 @@ async def broadcast_confirm(callback: CallbackQuery, bot: Bot, session: AsyncSes
     await callback.message.delete()
     broadcast_service = BroadcastService(bot, session)
     data = await state.get_data()
-    await broadcast_service.send_broadcast(text=data.get("message", "Broadcast failed."))
+    status = await broadcast_service.send_broadcast(text=data.get("message", "Broadcast failed."))
+
+    success = status["success"]
+    if not success:
+        await callback.message.answer("Broadcast failed.")
+        return
+    await callback.message.answer(get_broadcast_sent_text(status))
+
     await callback.answer()
     await state.clear()
 
