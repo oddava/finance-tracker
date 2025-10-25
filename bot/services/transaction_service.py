@@ -6,8 +6,8 @@ class TransactionService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    @staticmethod
     async def create_transaction(
-            self,
             user_id: int,
             amount: float,
             category_id: int,
@@ -16,7 +16,7 @@ class TransactionService:
             payment_method: str = "cash"
     ) -> Transaction:
         """Create a new transaction"""
-        transaction = Transaction(
+        transaction = await Transaction.create(
             user_id=user_id,
             amount=amount,
             category_id=category_id,
@@ -24,7 +24,4 @@ class TransactionService:
             description=description,
             payment_method=payment_method,
         )
-        self.session.add(transaction)
-        await self.session.commit()
-        await self.session.refresh(transaction)
         return transaction

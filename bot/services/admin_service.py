@@ -31,11 +31,8 @@ class BroadcastService:
         Returns:
             Dict with success, failed, and blocked counts
         """
-        # Get all users
-        result = await self.session.execute(
-            select(User.user_id)
-        )
-        user_ids = [row[0] for row in result]
+        result = await User.get_all()
+        user_ids = [row.user_id for row in result]
 
         if exclude_user_ids:
             user_ids = [uid for uid in user_ids if uid not in exclude_user_ids]

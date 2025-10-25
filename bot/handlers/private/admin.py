@@ -23,6 +23,7 @@ from bot.utils.helpers import get_total_users, get_new_users_today, get_active_u
 
 admin_router = Router()
 
+
 class AdminState(StatesGroup):
     confirm_broadcast = State()
 
@@ -31,7 +32,7 @@ class AdminState(StatesGroup):
 async def toggle_maintenance(message: Message):
     """Toggle maintenance mode (admin only)"""
     # Toggle maintenance mode
-    maintenance_status = await BotSetting.filter_first(BotSetting.key=="maintenance_mode")
+    maintenance_status = await BotSetting.filter_first(BotSetting.key == "maintenance_mode")
 
     is_enabled = str(maintenance_status.value).lower() == "true"
     settings.MAINTENANCE_MODE = not is_enabled
@@ -40,7 +41,6 @@ async def toggle_maintenance(message: Message):
 
     maintenance_status = str(maintenance_status.value).lower() == "true"
     status = "🔧 ENABLED" if maintenance_status else "✅ DISABLED"
-
 
     await message.answer(
         f"<b>Maintenance Mode: {status}</b>\n\n"
@@ -52,10 +52,11 @@ async def toggle_maintenance(message: Message):
         f"(@{message.from_user.username})"
     )
 
+
 @admin_router.message(Command("status"), AdminFilter())
 async def check_status(message: Message):
     """Check bot status (admin only)"""
-    maintenance_status = await BotSetting.filter_first(BotSetting.key=="maintenance_mode")
+    maintenance_status = await BotSetting.filter_first(BotSetting.key == "maintenance_mode")
 
     status = "🔧 Under Maintenance" if str(maintenance_status.value).lower() == "true" else "✅ Running"
 
@@ -100,6 +101,72 @@ async def admin_panel(message: Message):
             reply_markup=keyboard,
             parse_mode="HTML"
         )
+
+
+@admin_router.callback_query(F.data == "admin_broadcast", AdminFilter())
+async def show_broadcast_info(callback: CallbackQuery):
+    """Show broadcast information"""
+
+    await callback.answer()
+
+    response = (
+        "📢 <b>Broadcast Message</b>\n\n"
+        "To send a broadcast message to all users:\n\n"
+        "Use command: <code>/broadcast your message here</code>\n\n"
+        "⚠️ <b>Warning:</b> This will send the message to ALL users!"
+    )
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="« Back", callback_data="admin_back")],
+    ])
+
+    await callback.message.edit_text(response, reply_markup=keyboard, parse_mode="HTML")
+
+
+@admin_router.message(Command("broadcast"), AdminFilter())
+async def broadcast_message(message: Message, session: AsyncSession, state: FSMContext):
+    """Broadcast message to all users"""
+
+    # Get message text (everything after /broadcast)
+    text = message.text.replace("/broadcast", "").strip()
+
+    if not text:
+        await message.answer(
+            "❌ <b>Usage:</b> <code>/broadcast your message here</code>",
+            parse_mode="HTML"
+        )
+        return
+    await state.set_state(AdminState.confirm_broadcast)
+    await state.update_data(message=text)
+
+    # Confirm broadcast
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Yes, Send", callback_data=f"broadcast_confirm"),
+            InlineKeyboardButton(text="❌ Cancel", callback_data="admin_back"),
+        ]
+    ])
+
+    total_users = await get_total_users(session)
+
+    await message.answer(
+        f"📢 <b>Confirm Broadcast</b>\n\n"
+        f"<b>Recipients:</b> {total_users:,} users\n\n"
+        f"<b>Message:</b>\n{text}\n\n"
+        f"Send this message to all users?",
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
+
+
+@admin_router.callback_query(F.data == "broadcast_confirm")
+async def broadcast_confirm(callback: CallbackQuery, bot: Bot, session: AsyncSession, state: FSMContext):
+    await callback.message.delete()
+    broadcast_service = BroadcastService(bot, session)
+    data = await state.get_data()
+    await broadcast_service.send_broadcast(text=data.get("message", "Broadcast failed."))
+    await callback.answer()
+    await state.clear()
 
 
 @admin_router.callback_query(F.data == "admin_stats", AdminFilter())
@@ -293,77 +360,11 @@ async def toggle_maintenance(callback: CallbackQuery):
     await show_maintenance_options(callback)
 
 
-@admin_router.callback_query(F.data == "admin_broadcast", AdminFilter())
-async def show_broadcast_info(callback: CallbackQuery):
-    """Show broadcast information"""
-
-    await callback.answer()
-
-    response = (
-        "📢 <b>Broadcast Message</b>\n\n"
-        "To send a broadcast message to all users:\n\n"
-        "Use command: <code>/broadcast your message here</code>\n\n"
-        "⚠️ <b>Warning:</b> This will send the message to ALL users!"
-    )
-
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="« Back", callback_data="admin_back")],
-    ])
-
-    await callback.message.edit_text(response, reply_markup=keyboard, parse_mode="HTML")
-
-
 @admin_router.callback_query(F.data == "admin_back")
 async def back_to_admin_panel(callback: CallbackQuery):
     """Go back to main admin panel"""
     await callback.answer()
     await admin_panel(callback.message)
-
-
-@admin_router.message(Command("broadcast"), AdminFilter())
-async def broadcast_message(message: Message, session: AsyncSession, state: FSMContext):
-    """Broadcast message to all users"""
-
-    # Get message text (everything after /broadcast)
-    text = message.text.replace("/broadcast", "").strip()
-
-    if not text:
-        await message.answer(
-            "❌ <b>Usage:</b> <code>/broadcast your message here</code>",
-            parse_mode="HTML"
-        )
-        return
-    await state.set_state(AdminState.confirm_broadcast)
-    await state.update_data(message=text)
-
-    # Confirm broadcast
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="✅ Yes, Send", callback_data=f"broadcast_confirm"),
-            InlineKeyboardButton(text="❌ Cancel", callback_data="admin_back"),
-        ]
-    ])
-
-
-
-    # Store broadcast text in message for later (you might want to use state here)
-    total_users = await get_total_users(session)
-
-    await message.answer(
-        f"📢 <b>Confirm Broadcast</b>\n\n"
-        f"<b>Recipients:</b> {total_users:,} users\n\n"
-        f"<b>Message:</b>\n{text}\n\n"
-        f"Send this message to all users?",
-        reply_markup=keyboard,
-        parse_mode="HTML"
-    )
-
-
-@admin_router.callback_query(F.data == "broadcast_confirm")
-async def broadcast_confirm(callback: CallbackQuery, bot: Bot, session: AsyncSession):
-    broadcast_service = BroadcastService(bot, session)
-    await broadcast_service.send_broadcast(text=callback.message.text)
-    await callback.answer()
 
 
 @admin_router.message(Command("stats"), AdminFilter())
@@ -448,6 +449,7 @@ async def user_info(message: Message, session: AsyncSession):
     )
 
     await message.answer(response, parse_mode="HTML")
+
 
 # ==================== EXPORT FUNCTIONS ====================
 

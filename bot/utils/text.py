@@ -6,23 +6,22 @@ def get_menu_text() -> str:
     """Display main menu with all options"""
 
     return (
-        "🏠 <b>Main Menu</b>\n\n"
         "What would you like to do?\n\n"
         "<b>Quick Commands:</b>\n"
         "• Just type: <code>50k taxi</code>\n"
         "• /today - Today's summary\n"
         "• /recent - Recent transactions\n"
-        "• /help - Get help"
+        "• /help - About this bot"
     )
 
 def get_help_text() -> str:
     return (
-        "❓ <b>How to Use Finance Tracker Bot</b>\n\n"
+        "❓ <b>How to use the bot</b>\n\n"
 
         "<b>📝 Logging Expenses:</b>\n"
-        "• Natural: <code>50k taxi</code>\n"
-        "• Natural: <code>lunch 25000</code>\n"
-        "• Natural: <code>spent 150 on groceries</code>\n"
+        "• Example: <code>50k taxi</code>\n"
+        "• Example: <code>lunch 25000</code>\n"
+        "• Example: <code>spent 150 on groceries</code>\n"
 
         "<b>📊 View Reports:</b>\n"
         "• /today - Today's expenses\n"
@@ -80,7 +79,6 @@ def get_feedback_text() -> str:
         "We'd love to hear from you!\n\n"
 
         "📧 <b>Contact:</b>\n"
-        "• Email: oddava@proton.me\n"
         "• Telegram: @notJony\n\n"
 
         "🐛 <b>Report Issues:</b>\n"

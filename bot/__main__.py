@@ -124,6 +124,7 @@ async def webhook(
 
 bot_start_time = datetime.now()
 @app.get("/health")
+@app.head("/health")
 async def health_check():
     """Health check for monitoring"""
     uptime = (datetime.now() - bot_start_time).total_seconds()

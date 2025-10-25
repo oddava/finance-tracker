@@ -16,7 +16,7 @@ class MockCategory:
 @pytest.fixture
 def parser():
     """Create parser instance"""
-    return ExpenseParser(openai_api_key=None)  # No AI for basic tests
+    return ExpenseParser()  # No AI for basic tests
 
 
 @pytest.fixture

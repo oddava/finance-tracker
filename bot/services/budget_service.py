@@ -1,5 +1,5 @@
 from typing import Optional, Dict
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from bot.database.models import Budget, Transaction
 
@@ -26,8 +26,6 @@ class BudgetService:
         if not budget:
             return None
 
-        # Calculate spent amount (this period)
-        # Adjust the query based on your budget period logic
         spent = await self._calculate_spent(user_id, category_id)
 
         percentage = (spent / budget.amount * 100) if budget.amount > 0 else 0
@@ -42,9 +40,6 @@ class BudgetService:
 
     async def _calculate_spent(self, user_id: int, category_id: int) -> float:
         """Calculate total spent in current period"""
-        # Implement based on your budget period logic
-        # This is a simple example
-        from sqlalchemy import func
         result = await self.session.execute(
             select(func.sum(Transaction.amount)).where(
                 Transaction.user_id == user_id,
