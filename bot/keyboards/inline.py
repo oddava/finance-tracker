@@ -40,13 +40,17 @@ def get_category_keyboard(categories) -> InlineKeyboardMarkup:
 
 
 def get_currency_keyboard(current: str = None) -> InlineKeyboardMarkup:
-    """Create currency selection keyboard"""
+    """Create currency selection keyboard with more options"""
     currencies = [
         ("🇺🇿 UZS - So'm", "curr_UZS"),
         ("🇺🇸 USD - Dollar", "curr_USD"),
         ("🇪🇺 EUR - Euro", "curr_EUR"),
         ("🇷🇺 RUB - Ruble", "curr_RUB"),
         ("🇬🇧 GBP - Pound", "curr_GBP"),
+        ("🇯🇵 JPY - Yen", "curr_JPY"),
+        ("🇨🇳 CNY - Yuan", "curr_CNY"),
+        ("🇰🇿 KZT - Tenge", "curr_KZT"),
+        ("🇹🇷 TRY - Lira", "curr_TRY"),
     ]
 
     buttons = []

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, Sequence, List, Dict, Any, Coroutine
+from typing import Optional, Sequence, List, Dict
 
 import pytz
 from aiogram.types import KeyboardButton, Message
@@ -12,10 +12,8 @@ from sqlalchemy.sql.operators import and_
 
 from bot.database import Category, Transaction, Budget, User
 
-from aiogram.utils.i18n import gettext as _
 
-
-async def create_default_categories(session: AsyncSession, user_id: int):
+async def create_default_categories(user_id: int):
     """Create default expense/income categories for new user"""
     default_categories = [
         # Expense categories
@@ -28,7 +26,6 @@ async def create_default_categories(session: AsyncSession, user_id: int):
         {"name": "Healthcare", "icon_emoji": "🏥", "type": "expense", "color": "#BB8FCE"},
         {"name": "Education", "icon_emoji": "📚", "type": "expense", "color": "#85C1E2"},
         {"name": "Other", "icon_emoji": "💸", "type": "expense", "color": "#BDC3C7"},
-
         # Income categories
         {"name": "Salary", "icon_emoji": "💰", "type": "income", "color": "#2ECC71"},
         {"name": "Freelance", "icon_emoji": "💼", "type": "income", "color": "#27AE60"},
@@ -36,14 +33,18 @@ async def create_default_categories(session: AsyncSession, user_id: int):
         {"name": "Gift", "icon_emoji": "🎁", "type": "income", "color": "#52BE80"},
         {"name": "Other Income", "icon_emoji": "💵", "type": "income", "color": "#58D68D"},
     ]
+
+    # Add slug and user info
     for category in default_categories:
-        category["slug"] = slugify(category["name"])
+        category.update({
+            "slug": slugify(category["name"]),
+            "user_id": user_id,
+            "is_default": True,
+        })
 
-    for cat_data in default_categories:
-        category = Category(user_id=user_id, is_default=True, **cat_data)
-        session.add(category)
+    await Category.batch_create(default_categories)
 
-    await session.commit()
+
 
 
 async def get_user_categories(
@@ -715,3 +716,73 @@ def to_user_timezone(dt: datetime, user_timezone: str) -> datetime:
     except Exception:
         tz = pytz.utc
     return dt.astimezone(tz)
+
+def get_currency_display(code: str) -> str:
+    """Get currency display name with symbol"""
+    currencies = {
+        'UZS': "🇺🇿 So'm",
+        'USD': "🇺🇸 Dollar ($)",
+        'EUR': "🇪🇺 Euro (€)",
+        'RUB': "🇷🇺 Ruble (₽)",
+        'GBP': "🇬🇧 Pound (£)",
+        'JPY': "🇯🇵 Yen (¥)",
+        'CNY': "🇨🇳 Yuan (¥)",
+        'KZT': "🇰🇿 Tenge (₸)",
+        'TRY': "🇹🇷 Lira (₺)"
+    }
+    return currencies.get(code, code)
+
+
+def convert_currency(
+    amount: float,
+    from_currency: str,
+    to_currency: str,
+    rates: Dict[str, float],
+    *,
+    base: str = "USD",
+    decimals: int | None = 2
+) -> float:
+    """
+    Convert `amount` from `from_currency` to `to_currency` using `rates`.
+
+    Args:
+        amount: numeric amount in `from_currency`.
+        from_currency: ISO currency code string (e.g. "UZS", "USD", "JPY").
+        to_currency: ISO currency code string (target).
+        rates: mapping currency_code -> value of 1 unit of that currency in `base`.
+               Example: {"USD": 1.0, "UZS": 0.000066, "EUR": 1.07}
+               (meaning 1 UZS = 0.000066 USD).
+        base: the base currency the rates are expressed in (default "USD").
+        decimals: if not None, round the result to this many decimals.
+
+    Returns:
+        converted_amount (float)
+
+    Raises:
+        ValueError if a required rate is missing or inputs are invalid.
+    """
+    if amount is None:
+        raise ValueError("amount must be provided")
+
+    # Normalize currency codes
+    fc = from_currency.upper()
+    tc = to_currency.upper()
+
+    if fc == tc:
+        result = float(amount)
+        return round(result, decimals) if decimals is not None else result
+
+    if fc not in rates:
+        raise ValueError(f"Missing rate for from_currency: {fc}")
+    if tc not in rates:
+        raise ValueError(f"Missing rate for to_currency: {tc}")
+
+    try:
+        # convert source -> base (e.g., USD)
+        amount_in_base = float(amount) * float(rates[fc])
+        # convert base -> target
+        converted = amount_in_base / float(rates[tc])
+    except Exception as exc:
+        raise ValueError(f"Conversion error: {exc}") from exc
+
+    return round(converted, decimals) if decimals is not None else converted

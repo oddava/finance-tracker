@@ -1,5 +1,5 @@
 # ==================== Model with Class Methods ====================
-from typing import Any, Type, Optional, Sequence, TypeVar
+from typing import Any, Type, Optional, Sequence, TypeVar, List, Dict
 
 from sqlalchemy import select, func, update as sqlalchemy_update, delete as sqlalchemy_delete
 from sqlalchemy.orm import selectinload
@@ -32,6 +32,25 @@ class Model(Base):
             await session.flush()
             await session.refresh(obj)
             return obj
+
+    @classmethod
+    async def batch_create(cls: Type[T], list_of_kwargs: List[Dict]) -> List[T]:
+        """
+        Create multiple records at once.
+
+        Example:
+            users = await User.batch_create([
+                {"telegram_id": 123, "name": "John"},
+                {"telegram_id": 456, "name": "Alice"}
+            ])
+        """
+        async with db.session() as session:
+            objs = [cls(**kwargs) for kwargs in list_of_kwargs]
+            session.add_all(objs)
+            await session.flush()
+            for obj in objs:
+                await session.refresh(obj)
+            return objs
 
     @classmethod
     async def get(cls: Type[T], id_: int, relationship: Optional[Any] = None):
@@ -94,7 +113,7 @@ class Model(Base):
         async with db.session() as session:
             query = (
                 sqlalchemy_update(cls)
-                .where(cls.id == id_)
+                .where(cls.user_id == id_)
                 .values(**kwargs)
                 .execution_options(synchronize_session="fetch")
             )

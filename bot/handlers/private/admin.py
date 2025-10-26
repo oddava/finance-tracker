@@ -18,6 +18,7 @@ from bot.database import BotSetting, Transaction, Budget, Category, User
 from bot.database.engine import db
 from bot.filters.admin_filter import AdminFilter
 from bot.services.admin_service import BroadcastService
+from bot.services.user_service import UserService
 from bot.utils.helpers import get_total_users, get_new_users_today, get_active_users_today, get_active_users_week, \
     get_transactions_count_today, get_transactions_count_total, get_total_transaction_volume, get_user_retention_stats, \
     get_top_users_by_transactions, get_popular_categories, get_database_size
@@ -507,3 +508,9 @@ async def cmd_ping_db(msg: Message):
         async with db.session() as session:
             await session.execute(text("SELECT 1"))
     await msg.answer("Database check done ✅")
+
+@admin_router.message(Command("cache_stats"))
+async def cache_stats_handler(message: Message, user_service: UserService):
+    """Show cache statistics (admin only)"""
+    stats = user_service.get_cache_stats()
+    await message.answer(f"📊 Cache Statistics:\n{stats}")

@@ -9,8 +9,8 @@ from aiogram.filters import Command, CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database import User
-from bot.keyboards.inline import currency_choice_ikm
-from bot.utils.helpers import get_monthly_summary, create_default_categories
+from bot.services.user_service import user_service
+from bot.utils.helpers import get_monthly_summary
 
 from loguru import logger
 
@@ -22,38 +22,20 @@ start_router = Router()
 
 
 @start_router.message(CommandStart())
-async def cmd_start(message: Message, session: AsyncSession) -> None:
+async def cmd_start(message: Message) -> None:
     """Handle /start command - welcome new users"""
-
+    user_id = message.from_user.id
     async with measure("start_handler"):
-        logger.info(f"User {message.from_user.id} has started the bot.")
-
-        user_data = message.from_user.model_dump(include={'first_name', 'language_code', 'username'})
-        async with measure("get_user_data"):
-            user, created = await User.get_or_create(
-                user_id=message.from_user.id,
-                defaults=dict(user_data)
-            )
-
-        if not created:
-            await message.answer(
-                text=_("What would you like to do?\n\n"
-                       "<b>Quick Commands:</b>\n"
-                       "• Just type: <code>50k taxi</code>\n"
-                       "• /today - Today's summary\n"
-                       "• /recent - Recent transactions\n"
-                       "• /help - About this bot"),
-                parse_mode="HTML"
-            )
-            return
-
+        logger.info(f"User {user_id} has started the bot.")
         await message.answer(
-            _("Welcome!\n💱 <b>First, let's set your currency:</b>\n\n"
-              "Select your preferred currency:"),
-            reply_markup=currency_choice_ikm(),
+            text=_("What would you like to do?\n\n"
+                   "<b>Quick Commands:</b>\n"
+                   "• Just type: <code>50k taxi</code>\n"
+                   "• /today - Today's summary\n"
+                   "• /recent - Recent transactions\n"
+                   "• /help - About this bot"),
             parse_mode="HTML"
         )
-        await create_default_categories(session, message.from_user.id)
 
 
 @start_router.callback_query(F.data.startswith("currency_set_"))

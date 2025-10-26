@@ -16,8 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.database import User
 from bot.handlers.private import admin_router
 from bot.keyboards.inline import get_language_keyboard, get_timezone_keyboard, get_timezone_search_keyboard, \
-    get_settings_keyboard
-from bot.utils.helpers import get_language_name, format_timezone
+    get_settings_keyboard, get_currency_keyboard
+from bot.services.user_service import user_service
+from bot.utils.helpers import get_language_name, format_timezone, get_currency_display
 
 settings_router = Router()
 
@@ -62,18 +63,11 @@ async def language_selected(callback: CallbackQuery, session: AsyncSession):
         await callback.answer(_("❌ Invalid language"), show_alert=True)
         return
 
-    # Update user language
-    user = await User.get(callback.from_user.id)
-    await User.update(
-        id_=user.id,
-        language_code=language_code
-    )
-
-    new_language_text = get_language_name(language_code)
+    user_service.update_user_language(callback.from_user.id, language_code)
 
     await callback.message.edit_text(
         _("✅ Language changed to {new_language}!\n\n"
-          "You can change it anytime in /settings").format(new_language=new_language_text),
+          "You can change it anytime in /settings").format(new_language=get_language_name(language_code)),
         parse_mode="HTML"
     )
 
@@ -207,11 +201,8 @@ async def timezone_selected(callback: CallbackQuery, session: AsyncSession):
         await callback.answer("❌ Invalid timezone", show_alert=True)
         return
 
-    # Update user timezone
-    user = await User.get(callback.from_user.id)
-    await User.update(id_=user.id, timezone=timezone_str)
+    await User.update(callback.from_user.id, timezone=timezone_str)
 
-    # Get current time in new timezone
     tz = pytz.timezone(timezone_str)
     current_time = datetime.now(tz).strftime("%H:%M")
     utc_offset = datetime.now(tz).strftime("%z")
@@ -233,7 +224,7 @@ async def timezone_selected(callback: CallbackQuery, session: AsyncSession):
 
 
 @admin_router.message(Command("timezone"))
-async def cmd_timezone(message: Message, session: AsyncSession):
+async def cmd_timezone(message: Message):
     """Direct timezone command"""
     user = await User.get(message.from_user.id)
 
@@ -265,6 +256,82 @@ async def settings_main(callback: CallbackQuery):
     user = await User.get(callback.from_user.id)
     await send_settings_menu(callback, user)
     await callback.answer()
+
+
+
+# ==================== CURRENCY SETTINGS ====================
+
+@admin_router.callback_query(F.data == "settings_currency")
+async def settings_currency(callback: CallbackQuery):
+    """Show currency selection"""
+    user = await User.get(callback.from_user.id)
+
+    try:
+        tz = pytz.timezone(user.timezone)
+        current_time = datetime.now(tz).strftime("%H:%M")
+    except:
+        current_time = datetime.now().strftime("%H:%M")
+
+    text = _(
+        "💱 <b>Select Currency</b>\n\n"
+        "Current: {currency}\n"
+        "Local time: {time}\n\n"
+        "Choose your preferred currency:"
+    ).format(
+        currency=get_currency_display(user.currency),
+        time=current_time
+    )
+
+    await callback.message.edit_text(
+        text,
+        reply_markup=get_currency_keyboard(current=user.currency),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@admin_router.callback_query(F.data.startswith("curr_"))
+async def currency_selected(callback: CallbackQuery):
+    """Handle currency selection"""
+    currency_code = callback.data.split("_")[1]
+
+    valid_currencies = ['UZS', 'USD', 'EUR', 'RUB', 'GBP', 'JPY', 'CNY', 'KZT', 'TRY']
+    if currency_code not in valid_currencies:
+        await callback.answer("❌ Invalid currency", show_alert=True)
+        return
+
+    await User.update(callback.from_user.id, currency=currency_code)
+
+    currency_display = get_currency_display(currency_code)
+
+    success_message = _(
+        "✅ Currency changed to {currency}!\n\n"
+        "All new transactions will be recorded in {code}."
+    ).format(currency=currency_display, code=currency_code)
+
+    await callback.message.edit_text(
+        success_message,
+        parse_mode="HTML"
+    )
+
+    await callback.answer(f"✅ {currency_code}")
+
+
+@admin_router.message(Command("currency"))
+async def cmd_currency(message: Message):
+    """Direct currency command"""
+    user = await User.get(id_=message.from_user.id)
+
+    text = _(
+        "💱 <b>Select Currency</b>\n\n"
+        "Current: {currency}"
+    ).format(currency=get_currency_display(user.currency))
+
+    await message.answer(
+        text,
+        reply_markup=get_currency_keyboard(current=user.currency),
+        parse_mode="HTML"
+    )
 
 
 # ==================== PLACEHOLDER HANDLERS ====================
