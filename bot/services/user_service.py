@@ -48,6 +48,7 @@ class UserService:
 
     async def update_user_language(self, user_id: int, language: str) -> None:
         """Update language and invalidate cache"""
+        logger.info(f"Updating user language for user {user_id}. Language: {language}")
         await User.update(id_=user_id, language_code=language)
 
         async with self._lock:

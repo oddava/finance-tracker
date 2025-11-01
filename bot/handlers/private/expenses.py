@@ -684,7 +684,7 @@ async def category_selected(
         )
 
         # Get category
-        category: Category = await Category.filter_first(criteria=Category.id == category_id)
+        category: Category = await Category.filter_first(Category.id == category_id)
 
         if not category or category.user_id != user.user_id:
             await callback.answer(_("❌ Category not found"), show_alert=True)

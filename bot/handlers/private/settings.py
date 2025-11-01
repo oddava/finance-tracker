@@ -63,7 +63,7 @@ async def language_selected(callback: CallbackQuery, session: AsyncSession):
         await callback.answer(_("❌ Invalid language"), show_alert=True)
         return
 
-    user_service.update_user_language(callback.from_user.id, language_code)
+    await user_service.update_user_language(callback.from_user.id, language_code)
 
     await callback.message.edit_text(
         _("✅ Language changed to {new_language}!\n\n"
